@@ -5,30 +5,32 @@
 class Particle{
 
     private:
-    std::array<double,2> position;
-    std::array<double,2> velocity;
-    std::array<double,2> acceleration;
+    std::array<double,3> position;
+    std::array<double,3> velocity;
+    std::array<double,3> acceleration;
 
 
-    double radius;
+    const double radius = 1.0;
+
+    const double mass = 1.0;
+    double pressure;
 
     public:
     //Constructor
-    Particle(std::array<double,2> initialPosition,std::array<double,2> initialVelocity,std::array<double,2> intialAcceleration,const double radius);
+    Particle(std::array<double,3> initialPosition,std::array<double,3> initialVelocity,std::array<double,3> intialAcceleration);
 
     //Default Constructor (Array Initialization)
     Particle();
 
     //Getters
-    std::array<double,2> getPosition();
-    std::array<double,2> getVelocity();
-    std::array<double,2> getAcceleration();
-    double getRadius();
+    std::array<double,3> getPosition();
+    std::array<double,3> getAcceleration();
+    std::array<double,3> getVelocity();
 
     //Setters
-    void setPosition(double newPosition[2]);
-    void setVelocity(double newVelocity[2]);
-    void setAcceleration(double newAcceleration[2]);
+    void setPosition(double newPosition[3]);
+    void setVelocity(double newVelocity[3]);
+    void setAcceleration(double newAcceleration[3]);
 
     //Update Position 
     void updatePosition();
