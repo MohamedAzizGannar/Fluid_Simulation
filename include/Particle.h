@@ -30,6 +30,13 @@ class Particle{
     void setVelocity(double newVelocity[2]);
     void setAcceleration(double newAcceleration[2]);
 
+    //Update Position 
+    void updatePosition();
+
+    //Update Velocity
+
+    void updateVelocity();
+
     
 
 };

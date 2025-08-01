@@ -44,3 +44,17 @@ std::array<double,2> Particle::getAcceleration(){
 std::array<double,2> Particle::getVelocity(){
     return velocity;
 }
+
+
+
+void Particle::updatePosition()
+{
+    position[0] += velocity[0];
+    position[1] += velocity[1];
+}
+
+void Particle::updateVelocity()
+{
+    velocity[0] += acceleration[0];
+    velocity[1] += acceleration[1];
+}
