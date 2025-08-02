@@ -36,9 +36,9 @@ class Particle{
 
 
     //Setters
-    void setPosition(double newPosition[3]);
-    void setVelocity(double newVelocity[3]);
-    void setAcceleration(double newAcceleration[3]);
+    void setPosition(std::array<double,3>  newPosition);
+    void setVelocity(std::array<double,3> newVelocity);
+    void setAcceleration(std::array<double,3> newAcceleration);
     void setDensity(double newDensity);
     void setPressure(double newPressure);
 
@@ -59,5 +59,15 @@ class Particle{
     std::array<double,3> calculatePressureForce(const std::vector<Particle>& particles, double coreRadius);
 
     std::array<double,3> calculateViscosityForce(const std::vector<Particle>& particles, double coreRadius);
+    
+    std::array<double,3> calculateGravitationalPull(const std::vector<Particle>& particles);
+    std::array<double,3> calculateGravity();
+
+    double Particle::calculateSmoothedColorField( double coreRadius,const std::vector<Particle>& particles);
+    std::array<double,3> Particle::calculateColorFieldGradient( double coreRadius, const std::vector<Particle>& particles);
+    double Particle::calculateColorFieldLaplacian( double coreRadius, const std::vector<Particle>& particles);
+    std::array<double,3> Particle::calculateSurfaceTensionForce( double coreRadius, const std::vector<Particle>& particles);
+
+    void applyForces(const std::vector<Particle>& particles, double coreRadius);
 };
 #endif
