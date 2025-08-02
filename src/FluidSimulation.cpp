@@ -100,6 +100,15 @@ void FluidSimulation::updatePositions(){
         particle.setPosition(particle.getPredictedPosition());
     }
 }
+void FluidSimulation::applyDamping(){
+    for (auto& particle : particles) {
+        auto velocity = particle.getVelocity();
+        velocity[0] *= DAMPING;
+        velocity[1] *= DAMPING;
+        velocity[2] *= DAMPING;
+        particle.setVelocity(velocity);
+    }
+}
 void FluidSimulation::physicsOperations(double dt){
 
     applyForces();
@@ -107,5 +116,6 @@ void FluidSimulation::physicsOperations(double dt){
     predictPositions(dt);
     resolveCollisions(dt);
     updatePositions();
+    applyDamping();
 }
 

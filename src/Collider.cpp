@@ -40,3 +40,29 @@ void Collider::resolveSphereAABBCollision(Particle& particle)const {
         particle.setVelocity(velocity);
     }
 }
+
+void Collider::resolveSphereCollision(Particle& p1, Particle& p2)const{
+    auto pos1 = p1.getPredictedPosition();
+    auto pos2 = p2.getPredictedPosition();
+
+    auto vel1 = p1.getVelocity();
+    auto vel2 = p2.getVelocity();
+
+
+    double radius1 = p1.getRadius();
+    double radius2 = p2.getRadius();
+
+
+    std::array<double,3> vect = {0.0,0.0,0.0};
+    double distanceSquared = 0;
+    for(int i = 0; i < 3 ; i ++){
+        vect[i] = pos1[i] - pos2[i];
+        distanceSquared += vect[i] * vect[i];
+    }
+    double distance = std::sqrt(distanceSquared);
+
+    if(distance < radius1 + radius2){
+
+    }
+
+}

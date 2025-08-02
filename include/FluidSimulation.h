@@ -41,6 +41,7 @@ class FluidSimulation{
     void resolveCollisions(double dt);
     void updatePositions();
     void physicsOperations(double dt);
+    void applyDamping();
 
 
  

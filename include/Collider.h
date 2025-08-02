@@ -18,6 +18,7 @@ class Collider{
 
 
     void resolveSphereAABBCollision(Particle& particle)const;
+    void resolveSphereCollision(Particle& p1, Particle& p2)const;
 
 };
 
