@@ -133,7 +133,7 @@ double Particle::calculateDensity(const std::vector<Particle>& particles, double
 }
 double Particle::calculatePressure(const std::vector<Particle>& particles,double coreRadius){
 
-    double GAS_CONSTANT = 1000.0;
+    double GAS_CONSTANT = 200.0;
     double REST_DENSITY = 1000.0;
 
     double pressure = GAS_CONSTANT * (this->calculateDensity(particles,coreRadius) - REST_DENSITY);
@@ -153,7 +153,6 @@ std::array<double,3> Particle::calculatePressureForce(const std::vector<Particle
         std::array<double,3> direction = {position[0]-particlePosition[0],position[1]-particlePosition[1],position[2]-particlePosition[2]};
 
         double distance = findVector3Length(direction);
-        std::cout<<"Distance = "<< distance<<std::endl;
         if(distance<= 0.0001 || distance>=coreRadius) continue;
 
         std::array<double,3> normalizedDirection = normalizeVector3(direction);
@@ -164,19 +163,14 @@ std::array<double,3> Particle::calculatePressureForce(const std::vector<Particle
         for(int i = 0; i < gradW.size(); i++)
         {
             gradW[i] = normalizedDirection[i] * Wspike(distance, coreRadius);
-            std::cout<<"GradW at index"<<i<<" : "<<gradW[i]<<"\n";
         }
         double pressureJ = neighbor.getPressure();
         double densityJ = neighbor.getDensity();
         if(densityJ < 1e-12) continue;
-        std::cout<<"Densityj = "<< densityJ<<std::endl;
 
         double avgPressure = (pressureI + pressureJ) / 2.0;
-        std::cout<<"PressureI = "<< pressureI<<std::endl;
-        std::cout<<"pressureJ = "<< pressureJ<<std::endl;
 
         double coefficient = -particleMass * avgPressure / densityJ;
-        std::cout<<"Coefficient = "<< coefficient<<std::endl;
 
         for(int i = 0; i < pressureForce.size(); i++)
         {
