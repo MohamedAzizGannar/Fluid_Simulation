@@ -28,7 +28,7 @@ void FluidSimulation::update(double deltaTime)
 
     for(auto& particle:particles){
         auto [x,y,z] = particle.getPosition();
-        std::cout<<"Position : ("<<x<<","<<y<<","<<z<<")"<<std::endl;
+        //std::cout<<"Position : ("<<x<<","<<y<<","<<z<<")"<<std::endl;
     }
     std::cout<<std::endl;
 } 
@@ -92,6 +92,10 @@ void FluidSimulation::resolveCollisions(double dt){
     for(int pass = 0;pass < collisionPasses; pass++){
         for(auto& particle : particles){
             worldBounds.resolveSphereAABBCollision(particle);
+            for(auto& neighbor : particles){
+                if(particle.getId() == neighbor.getId())continue;
+                worldBounds.resolveSphereCollision(particle,neighbor);
+            }
         }
     }
 }

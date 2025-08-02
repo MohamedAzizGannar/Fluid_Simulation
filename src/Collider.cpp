@@ -2,10 +2,7 @@
 #include <iostream>
 #include <array>
 #include <cmath>
-double findVector3Length(std::array<double,3> vect){
-    auto [x,y,z] = vect;
-    return std::sqrt(x*x + y*y + z*z);
-}
+
 double dotProductofVect(std::array<double,3> V1, std::array<double,3> V2){
     return V1[0]*V2[0] + V1[1]*V2[1] + V1[2]*V2[2] ;
 }

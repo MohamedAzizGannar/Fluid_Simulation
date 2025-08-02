@@ -56,6 +56,7 @@ double roundDouble(double num,uint8_t decimals)
 
 std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
 {
+    int counter = 0;
     std::vector<Particle> particles;
     for(int i = 0; i< rows;i++){
         for(int j = 0; j < cols; j++){
@@ -68,7 +69,9 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
                              static_cast<double>(j) + getRoundedRandom(-0.1, 0.1, 2),
                              static_cast<double>(k) + getRoundedRandom(-0.1, 0.1, 2)};
 
-                Particle newParticle = Particle(pos,vel,cst,i+k+j);
+                Particle newParticle = Particle(pos,vel,cst,counter);
+                counter++;
+                std::cout<<"Particle id:"<<newParticle.getId()<<std::endl;
                 particles.push_back(newParticle);
             }
         }
@@ -84,7 +87,7 @@ int main (int argc, char** argv)
     std::array<double,3> maxBounds = {10.5, 10.5, 10.5};
 
     Collider boxCollider = Collider(minBounds,maxBounds);
-    unsigned int iterations = 100;
+    unsigned int iterations = 1;
     simulationLoop(particles,boxCollider,iterations);
   
     return 0;

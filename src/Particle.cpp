@@ -103,6 +103,7 @@ void Particle::setAcceleration(std::array<double,3>  newAcceleration){
 }
 void Particle::setDensity(double newDensity){density = newDensity;}
 void Particle::setPressure(double newPressure){pressure = newPressure;}
+void Particle::setId(int i){id = i;}
 
 
 
@@ -127,6 +128,8 @@ double Particle::getRadius()const{
 }
 double Particle::getPressure()const{return pressure;}
 double Particle::getDensity()const{return density;}
+int Particle::getId()const{return id;}
+
 
 
 void Particle::updatePosition(){
@@ -155,6 +158,7 @@ double Particle::calculateDensity(const std::vector<Particle>& particles)
 {
     double density = 0.0;
     for( const Particle& neighbor : particles){
+        if (neighbor.getId( ) == this->getId()) continue;
         std::array<double,3> distanceVector;
         auto pi = this->getPosition();
         auto pj = neighbor.getPosition();
@@ -183,7 +187,7 @@ std::array<double,3> Particle::calculatePressureForce(const std::vector<Particle
 
 
     for(const Particle& neighbor: particles){
-        if(&neighbor == this) continue;
+        if (neighbor.getId( ) == this->getId()) continue;
         std::array<double,3> particlePosition = neighbor.getPosition();
 
         std::array<double,3> direction = {position[0]-particlePosition[0],position[1]-particlePosition[1],position[2]-particlePosition[2]};
@@ -224,7 +228,7 @@ std::array<double,3> Particle::calculateViscosityForce(const std::vector<Particl
     std::array<double,3> viscosityForce = {0.0,0.0,0.0};
 
     for(const Particle& neighbor : particles){
-
+        if (neighbor.getId( ) == this->getId()) continue;
         std::array<double,3> particlePosition = neighbor.getPosition();
 
         std::array<double,3> direction = {position[0]-particlePosition[0],position[1]-particlePosition[1],position[2]-particlePosition[2]};
@@ -252,7 +256,7 @@ std::array<double,3> Particle::calculateGravitationalPull(const std::vector<Part
     std::array<double,3> gravityForce = {0.0,0.0,0.0};
     for(const auto& neighbor : particles)
     {
-        if (&neighbor == this) continue;
+        if (neighbor.getId( ) == this->getId()) continue;
         const std::array<double,3> neighborPosition = neighbor.getPosition();
         const double neighborMass = neighbor.getMass();
         std::array<double,3> vect;
@@ -282,7 +286,7 @@ double Particle::calculateSmoothedColorField( const std::vector<Particle>& parti
     double sum = 0.0;
     const std::array<double,3> pos = this ->getPosition();
     for(const auto& pj : particles){
-
+        if (pj.getId( ) == this->getId()) continue;
         const std::array<double,3> posj = pj.getPosition();
         const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
         const double distance = findVector3Length(vect);
@@ -300,7 +304,7 @@ std::array<double,3> Particle::calculateColorFieldGradient( const std::vector<Pa
     std::array<double,3> sum = {0.0,0.0,0.0};
     const std::array<double,3> pos = this ->getPosition();
     for(const auto& pj : particles){
-
+        if (pj.getId( ) == this->getId()) continue;
         const std::array<double,3> posj = pj.getPosition();
         const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
         const double massJ = pj.getMass();
@@ -318,6 +322,7 @@ double Particle::calculateColorFieldLaplacian(  const std::vector<Particle>& par
     double sum = 0.0;
     const std::array<double,3> pos = this ->getPosition();
     for(const auto& pj : particles){
+        if (pj.getId( ) == this->getId()) continue;
         const std::array<double,3> posj = pj.getPosition();
         const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
         const double massJ = pj.getMass();

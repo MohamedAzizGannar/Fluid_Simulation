@@ -17,7 +17,7 @@ class Particle{
 
     const double mass = 1.0;
 
-    const unsigned int id;
+    unsigned int id;
 
     double density;
     double pressure;
@@ -39,6 +39,7 @@ class Particle{
     double getRadius()const;
     double getPressure()const;
     double getDensity()const;
+    int getId()const;
 
 
     //Setters
@@ -48,6 +49,8 @@ class Particle{
     void setAcceleration(std::array<double,3> newAcceleration);
     void setDensity(double newDensity);
     void setPressure(double newPressure);
+    void setId(int i);
+
 
     //Update Position 
     void updatePosition();
