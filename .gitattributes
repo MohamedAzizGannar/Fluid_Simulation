@@ -1,0 +1,7 @@
+# Ignore Makefile and other build artifacts in language stats
+Makefile* linguist-vendored
+*.d       linguist-vendored
+
+# Force C++ files to be recognized
+*.cpp linguist-vendored=false
+*.hpp linguist-vendored=false
