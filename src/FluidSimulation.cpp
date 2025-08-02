@@ -28,7 +28,9 @@ void FluidSimulation::update(double deltaTime)
 
     for(auto& particle:particles){
         auto [x,y,z] = particle.getPosition();
-        //std::cout<<"Position : ("<<x<<","<<y<<","<<z<<")"<<std::endl;
+        auto [vx,vy,vz] = particle.getVelocity();
+
+        std::cout<<"Particle ID "<<particle.getId()<<" :  Position : ("<<x<<","<<y<<","<<z<<")"<<"   Velocity : ("<<vx<<","<<vy<<","<<vz<<")"<<std::endl;
     }
     std::cout<<std::endl;
 } 

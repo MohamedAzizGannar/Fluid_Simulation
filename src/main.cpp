@@ -71,7 +71,6 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
 
                 Particle newParticle = Particle(pos,vel,cst,counter);
                 counter++;
-                std::cout<<"Particle id:"<<newParticle.getId()<<std::endl;
                 particles.push_back(newParticle);
             }
         }
@@ -81,13 +80,23 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
 
 int main (int argc, char** argv)
 {
-    std::cout<<"Running\n";
-    std::vector<Particle> particles = initialiseParticlesArray(2,2,2);
+    std::array<double,3> pos1 = {10,10,10};
+    std::array<double,3> pos2 = {20,10,10};
+
+    std::array<double,3> vel1 = {10,0,0};
+    std::array<double,3> vel2 = {-10,0,0};
+
+    
+    Particle p1(pos1,vel1,{0,0,0},1);
+    Particle p2(pos2,vel2,{0,0,0},2);
+
+
+    std::vector<Particle> particles = {p1,p2};
     std::array<double,3> minBounds = {-0.5, -0.5, -0.5};
-    std::array<double,3> maxBounds = {10.5, 10.5, 10.5};
+    std::array<double,3> maxBounds = {50.5, 50.5, 50.5};
 
     Collider boxCollider = Collider(minBounds,maxBounds);
-    unsigned int iterations = 1;
+    unsigned int iterations = 50;
     simulationLoop(particles,boxCollider,iterations);
   
     return 0;

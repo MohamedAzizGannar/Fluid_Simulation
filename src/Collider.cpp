@@ -55,40 +55,60 @@ void Collider::resolveSphereAABBCollision(Particle& particle)const {
     }
 }
 
-void Collider::resolveSphereCollision(Particle& p1, Particle& p2)const{
-    auto pos1 = p1.getPredictedPosition();
-    auto pos2 = p2.getPredictedPosition();
-
-    auto vel1 = p1.getVelocity();
-    auto vel2 = p2.getVelocity();
-
-
-    double radius1 = p1.getRadius();
-    double radius2 = p2.getRadius();
-
-
-    std::array<double,3> vect = {0.0,0.0,0.0};
-    double distanceSquared = 0;
-    for(int i = 0; i < 3 ; i ++){
-        vect[i] = pos1[i] - pos2[i];
-        distanceSquared += vect[i] * vect[i];
+void Collider::resolveSphereCollision(Particle& p1, Particle& p2)const {
+    const double radiusSum = p1.getRadius() + p2.getRadius();
+    const auto pos1 = p1.getPosition();
+    const auto pos2 = p2.getPosition();
+    
+    // Calculate squared distance
+    double distSq = 0;
+    std::array<double,3> normal{0,0,0};
+    for(int i=0; i<3; i++) {
+        normal[i] = pos1[i] - pos2[i];
+        distSq += normal[i]*normal[i];
     }
-    double distance = std::sqrt(distanceSquared);
+    
+    // Check collision
+    if(distSq >= radiusSum*radiusSum) return;
+    
+    // Normalize collision normal
+    const double dist = sqrt(distSq);
+    for(int i=0; i<3; i++) normal[i] /= dist;
 
-    if(distance < radius1 + radius2){
-        std::array<double,3> newV1 = {0,0,0};
-        std::array<double,3> newV2 = {0,0,0};
+    // Calculate relative velocity
+    const auto vel1 = p1.getVelocity();
+    const auto vel2 = p2.getVelocity();
+    double velAlongNormal = 0;
+    for(int i=0; i<3; i++) 
+        velAlongNormal += (vel1[i]-vel2[i])*normal[i];
 
-        std::array<double,3> differenceOfVect = substractArrays(vel2,vel1);
-        double dotProduct = dotProductofVect(differenceOfVect,vect);
-        double coef = - dotProduct/distanceSquared;
+    // Only resolve if moving toward each other
+    if(velAlongNormal > 0) return;
 
-        newV1 = addArrays(vel1,scaleArray(vect,coef));
-        newV2 = addArrays(vel2,scaleArray(vect,coef));
+    // Calculate impulse 
+    const double restitution = 0.9; // Elasticity coefficient
+    double impulse = -(1 + restitution) * velAlongNormal / 2.0;
 
-        p1.setVelocity(newV1);
-        p2.setVelocity(newV2);
-
+    // Apply impulse
+    std::array<double,3> newVel1 = vel1;
+    std::array<double,3> newVel2 = vel2;
+    for(int i=0; i<3; i++) {
+        newVel1[i] += impulse * normal[i];
+        newVel2[i] -= impulse * normal[i];
     }
 
+    // Position correction to prevent sticking
+    const double overlap = (radiusSum - dist) * 0.5;
+    std::array<double,3> correctedPos1 = pos1;
+    std::array<double,3> correctedPos2 = pos2;
+    for(int i=0; i<3; i++) {
+        correctedPos1[i] += overlap * normal[i];
+        correctedPos2[i] -= overlap * normal[i];
+    }
+
+    // Commit changes
+    p1.setVelocity(newVel1);
+    p2.setVelocity(newVel2);
+    p1.setPosition(correctedPos1);
+    p2.setPosition(correctedPos2);
 }

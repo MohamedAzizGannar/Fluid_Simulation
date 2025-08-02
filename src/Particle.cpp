@@ -372,9 +372,7 @@ void Particle::applyForces(const std::vector<Particle>& particles){
     std::array<double,3> newAcceleration = {0.0, 0.0, 0.0}; 
     const double density = this->getDensity();
     if (density > 1e-6){
-        for(int i = 0 ; i < 3; i++){
-        newAcceleration[i] = totalForce[i] / density;
-        }
+        
     }
     this->setAcceleration(newAcceleration);
 }
