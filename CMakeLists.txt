@@ -8,4 +8,5 @@ include_directories(include)
 add_executable(FluidSimulation 
 src/main.cpp 
 src/Particle.cpp
+src/Collider.cpp
 )

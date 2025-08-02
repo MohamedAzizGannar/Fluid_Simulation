@@ -11,7 +11,7 @@ class Particle{
     std::array<double,3> acceleration;
 
 
-    const double radius = 1.0;
+    const double radius = 0.5;
 
     const double mass = 2600.0;
 
@@ -63,10 +63,10 @@ class Particle{
     std::array<double,3> calculateGravitationalPull(const std::vector<Particle>& particles);
     std::array<double,3> calculateGravity();
 
-    double Particle::calculateSmoothedColorField( const std::vector<Particle>& particles);
-    std::array<double,3> Particle::calculateColorFieldGradient( const std::vector<Particle>& particles);
-    double Particle::calculateColorFieldLaplacian( const std::vector<Particle>& particles);
-    std::array<double,3> Particle::calculateSurfaceTensionForce(  const std::vector<Particle>& particles);
+    double calculateSmoothedColorField( const std::vector<Particle>& particles);
+    std::array<double,3> calculateColorFieldGradient( const std::vector<Particle>& particles);
+    double calculateColorFieldLaplacian( const std::vector<Particle>& particles);
+    std::array<double,3> calculateSurfaceTensionForce(  const std::vector<Particle>& particles);
 
     void applyForces(const std::vector<Particle>& particles);
 };

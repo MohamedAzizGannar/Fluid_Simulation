@@ -11,7 +11,6 @@ const double GRAVITATIONAL_CONSTANT = 6.674e-11;
 const double CORE_RADIUS = 2.0;
 const double CORE_RADIUS9 = std::pow(CORE_RADIUS, 9);
 
-
 double findVector3Length(std::array<double,3> vect){
     auto [x,y,z] = vect;
     return std::sqrt(x*x + y*y + z*z);
@@ -72,79 +71,6 @@ double laplacianViscosityKernel(const std::array<double,3>& vect){
     return coefficient * (distance - CORE_RADIUS);
 }
 
-double Particle::calculateSmoothedColorField( const std::vector<Particle>& particles){
-    double sum = 0.0;
-    const std::array<double,3> pos = this ->getPosition();
-    for(const auto& pj : particles){
-
-        const std::array<double,3> posj = pj.getPosition();
-        const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
-        const double distance = findVector3Length(vect);
-        const double massJ = pj.getMass();
-        const double densityJ = pj.getDensity();
-        const double poly6Value = Wpoly6(distance);
-        if(densityJ < 1e-6)continue;
-        const double coefficient = massJ / densityJ;
-        sum += poly6Value * coefficient;
-    }
-    return sum;
-}
-
-std::array<double,3> Particle::calculateColorFieldGradient( const std::vector<Particle>& particles){
-    std::array<double,3> sum = {0.0,0.0,0.0};
-    const std::array<double,3> pos = this ->getPosition();
-    for(const auto& pj : particles){
-
-        const std::array<double,3> posj = pj.getPosition();
-        const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
-        const double massJ = pj.getMass();
-        const double densityJ = pj.getDensity();
-        const std::array<double,3> Wpoly6Gradient = gradientWpoly6(vect);
-        if(densityJ < 1e-6)continue;
-        const double coefficient = massJ/densityJ;
-        for(int i = 0; i < sum.size(); i++){
-            sum[i] +=   Wpoly6Gradient[i] * coefficient;
-        }
-    }
-    return sum;
-}
-double Particle::calculateColorFieldLaplacian(  const std::vector<Particle>& particles){
-    double sum = 0.0;
-    const std::array<double,3> pos = this ->getPosition();
-    for(const auto& pj : particles){
-        const std::array<double,3> posj = pj.getPosition();
-        const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
-        const double massJ = pj.getMass();
-        const double densityJ = pj.getDensity();
-        const double Wpoly6Laplacian = laplacianWpoly6(vect);
-        if(densityJ < 1e-6)continue;
-        const double coefficient = massJ/densityJ; 
-        sum += massJ/densityJ * Wpoly6Laplacian;
-    }
-    return sum;
-}
-double calculateCurvature(double laplacian,const std::array<double,3>& gradient){
-    const double magnitude = findVector3Length(gradient);
-    if(magnitude < 1e-6)return 0.0;
-    const double K = - laplacian / magnitude;
-    return K;
-}
-
-std::array<double,3> Particle::calculateSurfaceTensionForce(  const std::vector<Particle>& particles){
-    const std::array<double,3> pos = this ->getPosition();
-    std::array<double,3> surfaceTensionForce = {0.0,0.0,0.0};
-
-
-    const std::array<double,3> gradient = calculateColorFieldGradient(particles);
-    const double laplacian = calculateColorFieldLaplacian(particles);
-    const double curvature = calculateCurvature(laplacian,gradient);
-    for(int i = 0 ; i < surfaceTensionForce.size(); i++){
-        surfaceTensionForce[i] += -TENSION_COEFFICIENT * curvature * gradient[i];
-    }
-    
-    
-    return surfaceTensionForce;
-}
 Particle::Particle(std::array<double,3> initialPosition,std::array<double,3> initialVelocity,std::array<double,3> intialAcceleration){
     for(int i =0; i < 3; i++){
         position[i] = initialPosition[i];
@@ -352,6 +278,80 @@ std::array<double,3> Particle::calculateGravity(){
     return {0.0,9.81,0.0};
 }
 
+double Particle::calculateSmoothedColorField( const std::vector<Particle>& particles){
+    double sum = 0.0;
+    const std::array<double,3> pos = this ->getPosition();
+    for(const auto& pj : particles){
+
+        const std::array<double,3> posj = pj.getPosition();
+        const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
+        const double distance = findVector3Length(vect);
+        const double massJ = pj.getMass();
+        const double densityJ = pj.getDensity();
+        const double poly6Value = Wpoly6(distance);
+        if(densityJ < 1e-6)continue;
+        const double coefficient = massJ / densityJ;
+        sum += poly6Value * coefficient;
+    }
+    return sum;
+}
+
+std::array<double,3> Particle::calculateColorFieldGradient( const std::vector<Particle>& particles){
+    std::array<double,3> sum = {0.0,0.0,0.0};
+    const std::array<double,3> pos = this ->getPosition();
+    for(const auto& pj : particles){
+
+        const std::array<double,3> posj = pj.getPosition();
+        const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
+        const double massJ = pj.getMass();
+        const double densityJ = pj.getDensity();
+        const std::array<double,3> Wpoly6Gradient = gradientWpoly6(vect);
+        if(densityJ < 1e-6)continue;
+        const double coefficient = massJ/densityJ;
+        for(int i = 0; i < sum.size(); i++){
+            sum[i] +=   Wpoly6Gradient[i] * coefficient;
+        }
+    }
+    return sum;
+}
+double Particle::calculateColorFieldLaplacian(  const std::vector<Particle>& particles){
+    double sum = 0.0;
+    const std::array<double,3> pos = this ->getPosition();
+    for(const auto& pj : particles){
+        const std::array<double,3> posj = pj.getPosition();
+        const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
+        const double massJ = pj.getMass();
+        const double densityJ = pj.getDensity();
+        const double Wpoly6Laplacian = laplacianWpoly6(vect);
+        if(densityJ < 1e-6)continue;
+        const double coefficient = massJ/densityJ; 
+        sum += massJ/densityJ * Wpoly6Laplacian;
+    }
+    return sum;
+}
+double calculateCurvature(double laplacian,const std::array<double,3>& gradient){
+    const double magnitude = findVector3Length(gradient);
+    if(magnitude < 1e-6)return 0.0;
+    const double K = - laplacian / magnitude;
+    return K;
+}
+
+std::array<double,3> Particle::calculateSurfaceTensionForce(  const std::vector<Particle>& particles){
+    const std::array<double,3> pos = this ->getPosition();
+    std::array<double,3> surfaceTensionForce = {0.0,0.0,0.0};
+
+
+    const std::array<double,3> gradient = calculateColorFieldGradient(particles);
+    const double laplacian = calculateColorFieldLaplacian(particles);
+    const double curvature = calculateCurvature(laplacian,gradient);
+    for(int i = 0 ; i < surfaceTensionForce.size(); i++){
+        surfaceTensionForce[i] += -TENSION_COEFFICIENT * curvature * gradient[i];
+    }
+    
+    
+    return surfaceTensionForce;
+}
+
 void Particle::applyForces(const std::vector<Particle>& particles){
     std::array<double,3> totalForce = {0.0,0.0,0.0};
 
@@ -369,8 +369,6 @@ void Particle::applyForces(const std::vector<Particle>& particles){
         for(int i = 0 ; i < 3; i++){
         newAcceleration[i] = totalForce[i] / density;
         }
-
     }
-  
     this->setAcceleration(newAcceleration);
 }

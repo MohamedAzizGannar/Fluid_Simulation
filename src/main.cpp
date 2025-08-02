@@ -10,7 +10,9 @@
 #include<thread>
 
 #include <random>
+
 #include <Particle.h>
+#include <Collider.h>
 
 
 
@@ -38,7 +40,9 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
             for(int k = 0; k < depth; k++){
                 std::array<double, 3> pos = {static_cast<double>(i),static_cast<double>(j),static_cast<double>(k)};
                 std::array <double, 3> cst = {0,0,0};
-                Particle newParticle = Particle(pos,cst,cst);
+                std::array <double, 3> vel = {1,0.5,2};
+
+                Particle newParticle = Particle(pos,vel,cst);
                 particles.push_back(newParticle);
             }
         }
@@ -50,9 +54,12 @@ int main (int argc, char** argv)
 {
     std::cout<<"Running\n";
     std::vector<Particle> particles = initialiseParticlesArray(5,2,3);
-    
+    std::array<double,3> minBounds = {-0.5, -0.5, -0.5};
+    std::array<double,3> maxBounds = {10.5, 10.5, 10.5};
+
+    Collider boxCollider = Collider(minBounds,maxBounds);
    
-    const auto interval_ms = std::chrono::milliseconds(1800);
+    const auto interval_ms = std::chrono::milliseconds(450);
 
     auto nextFrame = std::chrono::steady_clock::now();
 
@@ -63,22 +70,18 @@ int main (int argc, char** argv)
         std::cout<<std::setw(10)<<"Counter : "<<counter<<std::endl;
         for(Particle& particle : particles)
         {
-            
-            particle.updateDensity(particles);
-            particle.updatePressure(particles);
+            std::cout<<std::boolalpha;
+            std::cout<<boxCollider.resolveSphereAABBCollision(particle)<<std::endl;
 
-            auto [xPressure, yPressure, zPressure] = particle.calculatePressureForce(particles);
-            auto [xViscosity, yViscosity, zViscosity] = particle.calculateViscosityForce(particles);
+            particle.updatePosition();
+
             auto [x, y, z] = particle.getPosition();
+            auto [vx, vy, vz] = particle.getVelocity();
 
-
-            std::string valuesData = "Particle " +std::to_string(index)+ " Position : "+ "(" + std::to_string(x) + ", " + std::to_string(y) + ", " +std::to_string(z) + ")" + " || Pressure : " + std::to_string(particle.getPressure()) + " || Density : " + std::to_string(particle.getDensity()) + "\n";
-            std::cout<<valuesData;
-
-            std::string pressureForceData = "PressureForce : (" + std::to_string(xPressure) + ", " + std::to_string(yPressure) + ", " +std::to_string(zPressure) + ")\n";
-            std::string viscosityForceData = "ViscosityForce : (" + std::to_string(xViscosity) + ", " + std::to_string(yViscosity) + ", " +std::to_string(zViscosity) + ")\n";
-            std::cout<<pressureForceData<<viscosityForceData;
-            std::cout<<std::setw(50)<<std::setfill('-')<<std::endl;
+            std::string valuesData = "Particle " +std::to_string(index)+ " Position : "+ "(" + std::to_string(x) + ", " + std::to_string(y) + ", " +std::to_string(z) + ")"
+            +" Velocity : "+ "(" + std::to_string(vx) + ", " + std::to_string(vy) + ", " +std::to_string(vz) + ")";
+            
+            std::cout<<valuesData<<std::endl;
             index++;
         }
 
@@ -87,7 +90,7 @@ int main (int argc, char** argv)
         counter ++;
         
 
-        if(counter>1)
+        if(counter>50)
         {
             break;
         }
