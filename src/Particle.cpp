@@ -5,11 +5,13 @@
 #include <cmath>
 
 const double TENSION_COEFFICIENT = 7.28;
-const double GAS_CONSTANT = 200.0;
+const double GAS_CONSTANT = 300.0;
 const double REST_DENSITY = 1000.0;
 const double GRAVITATIONAL_CONSTANT = 6.674e-11;
-const double CORE_RADIUS = 2.0;
+const double CORE_RADIUS = 1.5;
 const double CORE_RADIUS9 = std::pow(CORE_RADIUS, 9);
+const double MU = 0.00089;
+
 
 double findVector3Length(std::array<double,3> vect){
     auto [x,y,z] = vect;
@@ -71,20 +73,11 @@ double laplacianViscosityKernel(const std::array<double,3>& vect){
     return coefficient * (distance - CORE_RADIUS);
 }
 
-Particle::Particle(std::array<double,3> initialPosition,std::array<double,3> initialVelocity,std::array<double,3> intialAcceleration){
+Particle::Particle(std::array<double,3> initialPosition,std::array<double,3> initialVelocity,std::array<double,3> intialAcceleration, int id):id(id){
     for(int i =0; i < 3; i++){
         position[i] = initialPosition[i];
         velocity[i] = initialVelocity[i];
         acceleration[i] = intialAcceleration[i];
-    }
-}
-//Default Constructor
-Particle::Particle()
-{
-    for(int i =0; i < 3; i++){
-        position[i] = 0;
-        velocity[i] = 0;
-        acceleration[i] = 0;
     }
 }
 
@@ -92,6 +85,11 @@ void Particle::setPosition(std::array<double,3>  newPosition){
     position[0] = newPosition[0];
     position[1] = newPosition[1];
     position[2] = newPosition[2];
+}
+void Particle::setPredictedPosition(std::array<double,3>  newPredictedPosition){
+    predictedPosition[0] = newPredictedPosition[0];
+    predictedPosition[1] = newPredictedPosition[1];
+    predictedPosition[2] = newPredictedPosition[2];
 }
 void Particle::setVelocity(std::array<double,3>  newVelocity){
     velocity[0] = newVelocity[0];
@@ -110,6 +108,9 @@ void Particle::setPressure(double newPressure){pressure = newPressure;}
 
 std::array<double,3> Particle::getPosition()const{
     return position;
+}
+std::array<double,3> Particle::getPredictedPosition()const{
+    return predictedPosition;
 }
 
 std::array<double,3> Particle::getAcceleration()const{
@@ -221,7 +222,6 @@ std::array<double,3> Particle::calculatePressureForce(const std::vector<Particle
 std::array<double,3> Particle::calculateViscosityForce(const std::vector<Particle>& particles){
 
     std::array<double,3> viscosityForce = {0.0,0.0,0.0};
-    const double mu = 0.00089;
 
     for(const Particle& neighbor : particles){
 
@@ -242,7 +242,7 @@ std::array<double,3> Particle::calculateViscosityForce(const std::vector<Particl
             double densityJ = neighbor.getDensity();
             double laplacianW = laplacianViscosityKernel(direction);
             for(int j = 0; j <viscosityForce.size(); j++){
-                viscosityForce[j] += mu*particleMass*velocityDifference[j]/densityJ*laplacianW;
+                viscosityForce[j] += MU*particleMass*velocityDifference[j]/densityJ*laplacianW;
             }
         }
     }
@@ -275,7 +275,7 @@ std::array<double,3> Particle::calculateGravitationalPull(const std::vector<Part
     return gravityForce;
 }
 std::array<double,3> Particle::calculateGravity(){
-    return {0.0,9.81,0.0};
+    return {0.0,-9.81,0.0};
 }
 
 double Particle::calculateSmoothedColorField( const std::vector<Particle>& particles){
@@ -359,13 +359,14 @@ void Particle::applyForces(const std::vector<Particle>& particles){
     const std::array<double,3> viscosityForce = calculateViscosityForce( particles);
     const std::array<double,3> gravitationalForce = calculateGravitationalPull( particles);
     const std::array<double,3> gravity = calculateGravity();
+
     
     for(int i = 0; i < 3; i ++){
         totalForce[i] = pressureForce[i] + viscosityForce[i] + gravitationalForce[i] + gravity[i];
     }
-    std::array<double,3> newAcceleration;
+    std::array<double,3> newAcceleration = {0.0, 0.0, 0.0}; 
     const double density = this->getDensity();
-    if (density < 1e-6){
+    if (density > 1e-6){
         for(int i = 0 ; i < 3; i++){
         newAcceleration[i] = totalForce[i] / density;
         }

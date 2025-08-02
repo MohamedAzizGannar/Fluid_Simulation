@@ -13,7 +13,29 @@
 
 #include <Particle.h>
 #include <Collider.h>
+#include <FluidSimulation.h>
+bool running = true;
+void simulationLoop(std::vector<Particle>& particles, Collider& worldBounds,unsigned int counter)
+{
+    FluidSimulation simulation(particles,worldBounds);
+    auto lastTime = std::chrono::high_resolution_clock::now();
+    unsigned int frameCounter = 0;
+    while (frameCounter < counter ){
+        int index = 1;
 
+        
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        double deltaTime = std::chrono::duration<double>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
+        simulation.update(deltaTime);
+
+        
+        frameCounter ++;
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+
+    }
+}
 
 
 
@@ -38,11 +60,15 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
     for(int i = 0; i< rows;i++){
         for(int j = 0; j < cols; j++){
             for(int k = 0; k < depth; k++){
-                std::array<double, 3> pos = {static_cast<double>(i),static_cast<double>(j),static_cast<double>(k)};
+                std::array<double, 3> pos = {static_cast<double>(i)*2. + getRoundedRandom(-0.1, 0.1, 2),
+                             static_cast<double>(j)*2. + getRoundedRandom(-0.1, 0.1, 2),
+                             static_cast<double>(k)*2. + getRoundedRandom(-0.1, 0.1, 2)};
                 std::array <double, 3> cst = {0,0,0};
-                std::array <double, 3> vel = {1,0.5,2};
+                std::array <double, 3> vel = {static_cast<double>(i) + getRoundedRandom(-0.1, 0.1, 2),
+                             static_cast<double>(j) + getRoundedRandom(-0.1, 0.1, 2),
+                             static_cast<double>(k) + getRoundedRandom(-0.1, 0.1, 2)};
 
-                Particle newParticle = Particle(pos,vel,cst);
+                Particle newParticle = Particle(pos,vel,cst,i+k+j);
                 particles.push_back(newParticle);
             }
         }
@@ -53,50 +79,13 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
 int main (int argc, char** argv)
 {
     std::cout<<"Running\n";
-    std::vector<Particle> particles = initialiseParticlesArray(5,2,3);
+    std::vector<Particle> particles = initialiseParticlesArray(2,2,2);
     std::array<double,3> minBounds = {-0.5, -0.5, -0.5};
     std::array<double,3> maxBounds = {10.5, 10.5, 10.5};
 
     Collider boxCollider = Collider(minBounds,maxBounds);
-   
-    const auto interval_ms = std::chrono::milliseconds(450);
-
-    auto nextFrame = std::chrono::steady_clock::now();
-
-    int counter = 1;
-
-    while(true){
-        int index = 1;
-        std::cout<<std::setw(10)<<"Counter : "<<counter<<std::endl;
-        for(Particle& particle : particles)
-        {
-            std::cout<<std::boolalpha;
-            std::cout<<boxCollider.resolveSphereAABBCollision(particle)<<std::endl;
-
-            particle.updatePosition();
-
-            auto [x, y, z] = particle.getPosition();
-            auto [vx, vy, vz] = particle.getVelocity();
-
-            std::string valuesData = "Particle " +std::to_string(index)+ " Position : "+ "(" + std::to_string(x) + ", " + std::to_string(y) + ", " +std::to_string(z) + ")"
-            +" Velocity : "+ "(" + std::to_string(vx) + ", " + std::to_string(vy) + ", " +std::to_string(vz) + ")";
-            
-            std::cout<<valuesData<<std::endl;
-            index++;
-        }
-
-        std::cout<<std::endl;
-
-        counter ++;
-        
-
-        if(counter>50)
-        {
-            break;
-        }
-
-        nextFrame += interval_ms;
-        std::this_thread::sleep_until(nextFrame);  
-    }
+    unsigned int iterations = 100;
+    simulationLoop(particles,boxCollider,iterations);
+  
     return 0;
 }

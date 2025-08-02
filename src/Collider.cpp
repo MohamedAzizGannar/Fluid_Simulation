@@ -5,38 +5,38 @@
 
 Collider::Collider(const std::array<double,3>& minBounds,const std::array<double,3>& maxBounds):maxBounds(maxBounds),minBounds(minBounds){}
 
-bool Collider::resolveSphereAABBCollision(Particle& particle)const {
+void Collider::resolveSphereAABBCollision(Particle& particle)const {
 
-    auto position = particle.getPosition();
+    auto predictedPosition = particle.getPredictedPosition();
     auto velocity = particle.getVelocity();
     const double radius = particle.getRadius();
+
+    bool collisionOccured = false;
 
     for(int i = 0; i < 3; i ++){
         double minEdge = minBounds[i] + radius;
         double maxEdge = maxBounds[i] - radius;
-
-        if(position[i] < minEdge){
-            position[i] = minEdge;
+        if(predictedPosition[i] < minEdge){
+            predictedPosition[i] = minEdge;
             if(velocity[i] < 0)
             {
                 velocity[i] = - velocity[i] * RESTITUTION;
                 velocity[i] *= (1.0  - FRICTION);
             }
-            particle.setPosition(position);
-            particle.setVelocity(velocity);
-            return true;
-            
+            collisionOccured = true;
+
         }
-        else if (position[i] > maxEdge){
-            position[i] = maxEdge;
+        else if (predictedPosition[i] > maxEdge){
+            predictedPosition[i] = maxEdge;
             if(velocity[i] > 0){
                 velocity[i] = -velocity[i] * RESTITUTION;
                 velocity[i] *= (1.0 - FRICTION);
             }
-            particle.setPosition(position);
-            particle.setVelocity(velocity);
-            return true;
+            collisionOccured = true;
         }
     }
-    return false;
+    if(collisionOccured){
+        particle.setPredictedPosition(predictedPosition);
+        particle.setVelocity(velocity);
+    }
 }

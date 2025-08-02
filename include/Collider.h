@@ -17,7 +17,7 @@ class Collider{
     Collider(const std::array<double,3>& minBounds,const std::array<double,3>& maxBounds);
 
 
-    bool resolveSphereAABBCollision(Particle& particle)const;
+    void resolveSphereAABBCollision(Particle& particle)const;
 
 };
 

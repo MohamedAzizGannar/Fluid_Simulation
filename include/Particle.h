@@ -7,26 +7,32 @@ class Particle{
 
     private:
     std::array<double,3> position;
+    std::array<double,3> predictedPosition;
+
     std::array<double,3> velocity;
     std::array<double,3> acceleration;
 
 
     const double radius = 0.5;
 
-    const double mass = 2600.0;
+    const double mass = 1.0;
+
+    const unsigned int id;
 
     double density;
     double pressure;
 
     public:
     //Constructor
-    Particle(std::array<double,3> initialPosition,std::array<double,3> initialVelocity,std::array<double,3> intialAcceleration);
+    Particle(std::array<double,3> initialPosition,std::array<double,3> initialVelocity,std::array<double,3> intialAcceleration, int id);
 
     //Default Constructor (Array Initialization)
     Particle();
 
     //Getters
     std::array<double,3> getPosition() const;
+    std::array<double,3> getPredictedPosition() const;
+
     std::array<double,3> getAcceleration()const;
     std::array<double,3> getVelocity()const;
     double getMass()const;
@@ -37,6 +43,7 @@ class Particle{
 
     //Setters
     void setPosition(std::array<double,3>  newPosition);
+    void setPredictedPosition(std::array<double,3>  newPredictedPosition);
     void setVelocity(std::array<double,3> newVelocity);
     void setAcceleration(std::array<double,3> newAcceleration);
     void setDensity(double newDensity);
