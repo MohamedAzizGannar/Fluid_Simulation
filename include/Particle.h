@@ -49,6 +49,8 @@ class Particle{
 
     std::array<double,3> calculatePressureForce(std::vector<Particle> particles, double coreRadius,Particle consideredParticle);
 
+    std::array<double,3> calculateViscosityForce(std::vector<Particle> particles, double coreRadius, Particle consideredParticle);
+
 
     
 

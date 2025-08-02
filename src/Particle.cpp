@@ -20,6 +20,12 @@ double Wpoly6(double distance, double coreRadius)
     double secondMember = 0<= distance && distance <= coreRadius ? std::pow((coreRadius*coreRadius - distance*distance),3):0;
     return k * secondMember;
 }
+double Wspike(double distance, double coreRadius)
+{
+    if(distance<0 || distance > coreRadius){return 0.0;}
+    const double coefficient = 45.0/(M_PI * std::pow(coreRadius,6));
+    return coefficient * (coreRadius-distance);
+}
 
 Particle::Particle(std::array<double,3> initialPosition,std::array<double,3> initialVelocity,std::array<double,3> intialAcceleration){
     for(int i =0; i < 3; i++){
@@ -118,7 +124,7 @@ double Particle::calculatePressure(std::vector<Particle> particles, Particle con
 }
 std::array<double,3> Particle::calculatePressureForce(std::vector<Particle> particles, double coreRadius,Particle consideredParticle)
 {
-    std::array<double,3> pressure = {0,0,0};
+    std::array<double,3> pressureForce = {0,0,0};
     for(int i = 0 ; i < particles.size(); i++){
         std::array<double,3> particlePosition = particles[i].getPosition();
 
@@ -134,9 +140,9 @@ std::array<double,3> Particle::calculatePressureForce(std::vector<Particle> part
             gradW[i] = normalizedDirection[i] * Wpoly6(distance, coreRadius);
         }
         double coefficient = (-particleMass) * (calculatePressure(particles,consideredParticle) + calculatePressure(particles,particles[i]))/2 * calculateDensity(particles,particles[i]);
-        for(int i = 0; i < pressure.size(); i++)
+        for(int i = 0; i < pressureForce.size(); i++)
         {
-            pressure[i] += gradW[i] * coefficient;
+            pressureForce[i] += gradW[i] * coefficient;
         }
         /* 
         With:
@@ -156,5 +162,35 @@ std::array<double,3> Particle::calculatePressureForce(std::vector<Particle> part
             -h = core radius
         */
     }
-    return pressure;
+    return pressureForce;
+}
+
+
+std::array<double,3> Particle::calculateViscosityForce(std::vector<Particle> particles, double coreRadius, Particle consideredParticle){
+    std::array<double,3> viscosityForce = {0,0,0};
+    const double mu = 0.00089;
+    for(int i =0 ; i < particles.size(); i++){
+        std::array<double,3> particlePosition = particles[i].getPosition();
+
+        std::array<double,3> direction = {position[0]-particlePosition[0],position[1]-particlePosition[1],position[2]-particlePosition[2]};
+        double distance = findVector3Length(direction);
+        std::array<double,3> normalizedDirection = normalizeVector3(direction);
+
+        double particleMass = particles[i].getMass();
+
+
+        if(distance < coreRadius && distance > 0){
+            std::array<double,3> velocityDifference= {0,0,0};
+            for(int j = 0; j < velocityDifference.size();j++){
+                velocityDifference[i] = particles[i].getVelocity()[i] - consideredParticle.getVelocity()[i];
+            }
+            double laplacianW = Wspike(distance,coreRadius);
+            for(int j = 0; j <viscosityForce.size(); j++){
+                viscosityForce[i] += mu*particleMass*velocityDifference[i]*laplacianW;
+            }
+        }
+
+    }
+    return viscosityForce;
+
 }
