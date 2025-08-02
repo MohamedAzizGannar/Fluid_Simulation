@@ -55,25 +55,23 @@ std::vector<Particle> initialiseParticlesArray(int arraySize)
 
 }
 
-int main (int argc, char** argv){
-    
+int main (int argc, char** argv)
+{
+    std::cout<<"Running\n";
     std::vector<Particle> particles = initialiseParticlesArray(10);
 
-    
-    
-    
-     
+    std::cout << "Initial particle positions:\n";
 
-    int i = 0;
-    while( i < particles.size()){
-        for(int row = 0; row < rows ; row++){
-            while(particles[i].getPosition()[1] == row){
-                std::cout<<std::setw(2)<<"("<<particles[i].getPosition()[0]<<", "<<particles[i].getPosition()[1]<<", "<<particles[i].getPosition()[2]<<")";
-                ++i;
+    for (int row = 0; row < rows; row++) {
+        for (int col = 0; col < cols; col++) {
+            int index = row * cols + col;
+            if (index < particles.size()) {
+                auto [x, y, z] = particles[index].getPosition();
+                std::cout << std::setw(20) << "(" << x << ", " << y << ", " << z << ")";
             }
-            std::cout<<std::endl;
-        }
     }
+}
+    std::cout << std::endl;
 
     
    
@@ -108,6 +106,5 @@ int main (int argc, char** argv){
         nextFrame += interval_ms;
         std::this_thread::sleep_until(nextFrame);  
     }
-
     return 0;
 }

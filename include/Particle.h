@@ -2,6 +2,7 @@
 #define PARTICLE_H
 
 #include <array>
+#include <vector>
 class Particle{
 
     private:
@@ -26,6 +27,8 @@ class Particle{
     std::array<double,3> getPosition();
     std::array<double,3> getAcceleration();
     std::array<double,3> getVelocity();
+    double getMass();
+    double getRadius();
 
     //Setters
     void setPosition(double newPosition[3]);
@@ -36,8 +39,16 @@ class Particle{
     void updatePosition();
 
     //Update Velocity
-
     void updateVelocity();
+
+    //SPH Functions
+
+    double calculateDensity(std::vector<Particle> particles, Particle consideredParticle);
+
+    double calculatePressure(std::vector<Particle> particles, Particle consideredParticle);
+
+    std::array<double,3> calculatePressureForce(std::vector<Particle> particles, double coreRadius,Particle consideredParticle);
+
 
     
 
