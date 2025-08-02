@@ -56,20 +56,20 @@ void Particle::setPosition(double newPosition[3]){
     position[0] = newPosition[0];
     position[1] = newPosition[1];
     position[2] = newPosition[2];
-
 }
 void Particle::setVelocity(double newVelocity[3]){
     velocity[0] = newVelocity[0];
     velocity[1] = newVelocity[1];
     velocity[2] = newVelocity[2];
-
 }
 void Particle::setAcceleration(double newAcceleration[3]){
     acceleration[0] = newAcceleration[0];
     acceleration[1] = newAcceleration[1];
     acceleration[2] = newAcceleration[2];
-
 }
+void Particle::setDensity(double newDensity){density = newDensity;}
+void Particle::setPressure(double newPressure){pressure = newPressure;}
+
 
 
 std::array<double,3> Particle::getPosition()const{
@@ -89,7 +89,6 @@ double Particle::getRadius()const{
     return radius;
 }
 double Particle::getPressure()const{return pressure;}
-double Particle::getViscosity()const{return viscosity;}
 double Particle::getDensity()const{return density;}
 
 
@@ -103,6 +102,15 @@ void Particle::updateVelocity(){
     velocity[0] += acceleration[0];
     velocity[1] += acceleration[1];
     velocity[2] += acceleration[2];
+}
+void Particle::updateDensity(const std::vector<Particle>& particles, double coreRadius){
+    double newDensity = this->calculateDensity(particles,coreRadius);
+    this->setDensity(newDensity);
+}
+
+void Particle::updatePressure(const std::vector<Particle>& particles, double coreRadius){
+    double newPressure = this->calculatePressure(particles,coreRadius);
+    this->setPressure(newPressure);
 }
 
 //SPH FUNCTIONS
@@ -121,7 +129,6 @@ double Particle::calculateDensity(const std::vector<Particle>& particles, double
         if(distance>coreRadius)continue;
         density+= neighbor.getMass() * Wpoly6(distance,coreRadius);
     }
-    this->density = density;
     return density < 1e-12 ? 1e-12:density;
 }
 double Particle::calculatePressure(const std::vector<Particle>& particles,double coreRadius){
@@ -131,7 +138,6 @@ double Particle::calculatePressure(const std::vector<Particle>& particles,double
 
     double pressure = GAS_CONSTANT * (this->calculateDensity(particles,coreRadius) - REST_DENSITY);
     pressure = std::max(0.0,pressure);
-    this -> pressure = pressure;
     return pressure;
 }
 std::array<double,3> Particle::calculatePressureForce(const std::vector<Particle>& particles, double coreRadius){
@@ -185,30 +191,31 @@ std::array<double,3> Particle::calculatePressureForce(const std::vector<Particle
 }
 
 
-std::array<double,3> Particle::calculateViscosityForce(std::vector<Particle>& particles, double coreRadius){
+std::array<double,3> Particle::calculateViscosityForce(const std::vector<Particle>& particles, double coreRadius){
 
     std::array<double,3> viscosityForce = {0.0,0.0,0.0};
     const double mu = 0.00089;
 
-    for(int i =0 ; i < particles.size(); i++){
+    for(const Particle& neighbor : particles){
 
-        std::array<double,3> particlePosition = particles[i].getPosition();
+        std::array<double,3> particlePosition = neighbor.getPosition();
 
         std::array<double,3> direction = {position[0]-particlePosition[0],position[1]-particlePosition[1],position[2]-particlePosition[2]};
         double distance = findVector3Length(direction);
         std::array<double,3> normalizedDirection = normalizeVector3(direction);
 
-        double particleMass = particles[i].getMass();
+        double particleMass = neighbor.getMass();
 
 
         if(distance < coreRadius && distance > 0){
             std::array<double,3> velocityDifference= {0,0,0};
             for(int j = 0; j < velocityDifference.size();j++){
-                velocityDifference[j] = particles[i].getVelocity()[j] - this->getVelocity()[j];
+                velocityDifference[j] = neighbor.getVelocity()[j] - this->getVelocity()[j];
             }
+            double densityJ = neighbor.getDensity();
             double laplacianW = Wspike(distance,coreRadius);
             for(int j = 0; j <viscosityForce.size(); j++){
-                viscosityForce[j] += mu*particleMass*velocityDifference[j]*laplacianW;
+                viscosityForce[j] += mu*particleMass*velocityDifference[j]/densityJ*laplacianW;
             }
         }
     }

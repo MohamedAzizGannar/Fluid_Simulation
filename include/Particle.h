@@ -17,7 +17,6 @@ class Particle{
 
     double density;
     double pressure;
-    double viscosity;
 
     public:
     //Constructor
@@ -33,7 +32,6 @@ class Particle{
     double getMass()const;
     double getRadius()const;
     double getPressure()const;
-    double getViscosity()const;
     double getDensity()const;
 
 
@@ -41,12 +39,16 @@ class Particle{
     void setPosition(double newPosition[3]);
     void setVelocity(double newVelocity[3]);
     void setAcceleration(double newAcceleration[3]);
+    void setDensity(double newDensity);
+    void setPressure(double newPressure);
 
     //Update Position 
     void updatePosition();
 
     //Update Velocity
     void updateVelocity();
+    void updatePressure(const std::vector<Particle>& particles, double coreRadius);
+    void updateDensity(const std::vector<Particle>& particles, double coreRadius);
 
     //SPH Functions
 
@@ -56,6 +58,6 @@ class Particle{
 
     std::array<double,3> calculatePressureForce(const std::vector<Particle>& particles, double coreRadius);
 
-    std::array<double,3> calculateViscosityForce(std::vector<Particle>& particles, double coreRadius);
+    std::array<double,3> calculateViscosityForce(const std::vector<Particle>& particles, double coreRadius);
 };
 #endif

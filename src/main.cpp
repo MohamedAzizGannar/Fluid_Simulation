@@ -12,8 +12,7 @@
 #include <random>
 #include <Particle.h>
 
-const int rows = 2;
-const int cols = 5;
+
 
 const double CORE_RADIUS = 2.0;
 
@@ -32,9 +31,9 @@ double roundDouble(double num,uint8_t decimals)
     return std::round(num*scale) /scale;
 }
 
-std::vector<Particle> initialiseParticlesArray(int arraySize)
+std::vector<Particle> initialiseParticlesArray(int rows,int cols)
 {
-    std::vector<Particle> particles(arraySize);
+    std::vector<Particle> particles;
     for(int i = 0; i< rows;i++){
         for(int j = 0; j < cols; j++){
             std::array<double, 3> pos = {static_cast<double>(i),static_cast<double>(j),0.};
@@ -49,31 +48,35 @@ std::vector<Particle> initialiseParticlesArray(int arraySize)
 int main (int argc, char** argv)
 {
     std::cout<<"Running\n";
-    std::vector<Particle> particles = initialiseParticlesArray(10);
+    std::vector<Particle> particles = initialiseParticlesArray(10,10);
     
    
-    const auto interval_ms = std::chrono::milliseconds(900);
+    const auto interval_ms = std::chrono::milliseconds(1800);
 
     auto nextFrame = std::chrono::steady_clock::now();
 
     int counter = 1;
 
     while(true){
-
-        std::cout<<std::setw(5)<<"Counter: "<<counter<<std::endl;
-        for(int index = 0; index < particles.size(); index ++){
-            auto [x,y,z] = particles[index].calculatePressureForce(particles,CORE_RADIUS);
-            auto pressure = particles[index].calculatePressure(particles,CORE_RADIUS);
-            std::string output = "Pressure :" + std::to_string(roundDouble(pressure,2)) + "Pressure Force Vector: (" + std::to_string(roundDouble(x,2)) + ", " + std::to_string(roundDouble(y,2)) + ", "+ std::to_string(roundDouble(z,2))+")\n";
-            std::cout<<std::setw(20)<<output;
+        int index = 1;
+        std::cout<<std::setw(10)<<"Counter : "<<counter<<std::endl;
+        for(Particle& particle : particles)
+        {
             
+            particle.updateDensity(particles,CORE_RADIUS);
+            particle.updatePressure(particles,CORE_RADIUS);
+
+            std::string data = "Particle " +std::to_string(index)+ " : Pressure : " + std::to_string(particle.getPressure()) + "|| Density : " + std::to_string(particle.getDensity()) + "\n";
+            std::cout<<data;
+            index++;
         }
+
         std::cout<<std::endl;
 
         counter ++;
         
 
-        if(counter>1)
+        if(counter>10)
         {
             break;
         }
