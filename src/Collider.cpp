@@ -1,6 +1,23 @@
 #include <Collider.h>
 #include <iostream>
 #include <array>
+#include <cmath>
+double findVector3Length(std::array<double,3> vect){
+    auto [x,y,z] = vect;
+    return std::sqrt(x*x + y*y + z*z);
+}
+double dotProductofVect(std::array<double,3> V1, std::array<double,3> V2){
+    return V1[0]*V2[0] + V1[1]*V2[1] + V1[2]*V2[2] ;
+}
+std::array<double,3> substractArrays(std::array<double,3> v1, std::array<double,3> v2){
+    return {v1[0]-v2[0],v1[1]-v2[1],v1[2]-v2[2]};
+}
+std::array<double,3> addArrays(std::array<double,3> v1, std::array<double,3> v2){
+    return {v1[0]+v2[0],v1[1]+v2[1],v1[2]+v2[2]};
+}
+std::array<double,3> scaleArray(std::array<double,3> v1,double a){
+    return {v1[0]*a,v1[1]*a,v1[2]*a};
+}
 
 
 Collider::Collider(const std::array<double,3>& minBounds,const std::array<double,3>& maxBounds):maxBounds(maxBounds),minBounds(minBounds){}
@@ -62,6 +79,18 @@ void Collider::resolveSphereCollision(Particle& p1, Particle& p2)const{
     double distance = std::sqrt(distanceSquared);
 
     if(distance < radius1 + radius2){
+        std::array<double,3> newV1 = {0,0,0};
+        std::array<double,3> newV2 = {0,0,0};
+
+        std::array<double,3> differenceOfVect = substractArrays(vel2,vel1);
+        double dotProduct = dotProductofVect(differenceOfVect,vect);
+        double coef = - dotProduct/distanceSquared;
+
+        newV1 = addArrays(vel1,scaleArray(vect,coef));
+        newV2 = addArrays(vel2,scaleArray(vect,coef));
+
+        p1.setVelocity(newV1);
+        p2.setVelocity(newV2);
 
     }
 
