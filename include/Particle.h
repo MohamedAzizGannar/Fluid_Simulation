@@ -47,27 +47,27 @@ class Particle{
 
     //Update Velocity
     void updateVelocity();
-    void updatePressure(const std::vector<Particle>& particles, double coreRadius);
-    void updateDensity(const std::vector<Particle>& particles, double coreRadius);
+    void updatePressure(const std::vector<Particle>& particles);
+    void updateDensity(const std::vector<Particle>& particles);
 
     //SPH Functions
 
-    double calculateDensity(const std::vector<Particle>& particles, double coreRadius);
+    double calculateDensity(const std::vector<Particle>& particles);
 
-    double calculatePressure(const std::vector<Particle>& particles, double coreRadius);
+    double calculatePressure(const std::vector<Particle>& particles);
 
-    std::array<double,3> calculatePressureForce(const std::vector<Particle>& particles, double coreRadius);
+    std::array<double,3> calculatePressureForce(const std::vector<Particle>& particles);
 
-    std::array<double,3> calculateViscosityForce(const std::vector<Particle>& particles, double coreRadius);
+    std::array<double,3> calculateViscosityForce(const std::vector<Particle>& particles);
     
     std::array<double,3> calculateGravitationalPull(const std::vector<Particle>& particles);
     std::array<double,3> calculateGravity();
 
-    double Particle::calculateSmoothedColorField( double coreRadius,const std::vector<Particle>& particles);
-    std::array<double,3> Particle::calculateColorFieldGradient( double coreRadius, const std::vector<Particle>& particles);
-    double Particle::calculateColorFieldLaplacian( double coreRadius, const std::vector<Particle>& particles);
-    std::array<double,3> Particle::calculateSurfaceTensionForce( double coreRadius, const std::vector<Particle>& particles);
+    double Particle::calculateSmoothedColorField( const std::vector<Particle>& particles);
+    std::array<double,3> Particle::calculateColorFieldGradient( const std::vector<Particle>& particles);
+    double Particle::calculateColorFieldLaplacian( const std::vector<Particle>& particles);
+    std::array<double,3> Particle::calculateSurfaceTensionForce(  const std::vector<Particle>& particles);
 
-    void applyForces(const std::vector<Particle>& particles, double coreRadius);
+    void applyForces(const std::vector<Particle>& particles);
 };
 #endif

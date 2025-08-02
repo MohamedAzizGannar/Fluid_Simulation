@@ -14,7 +14,6 @@
 
 
 
-const double CORE_RADIUS = 2.0;
 
 double getRoundedRandom(double min, double max, int decimals)
 {
@@ -65,11 +64,11 @@ int main (int argc, char** argv)
         for(Particle& particle : particles)
         {
             
-            particle.updateDensity(particles,CORE_RADIUS);
-            particle.updatePressure(particles,CORE_RADIUS);
+            particle.updateDensity(particles);
+            particle.updatePressure(particles);
 
-            auto [xPressure, yPressure, zPressure] = particle.calculatePressureForce(particles,CORE_RADIUS);
-            auto [xViscosity, yViscosity, zViscosity] = particle.calculateViscosityForce(particles,CORE_RADIUS);
+            auto [xPressure, yPressure, zPressure] = particle.calculatePressureForce(particles);
+            auto [xViscosity, yViscosity, zViscosity] = particle.calculateViscosityForce(particles);
             auto [x, y, z] = particle.getPosition();
 
 
