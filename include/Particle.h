@@ -13,8 +13,11 @@ class Particle{
 
     const double radius = 1.0;
 
-    const double mass = 1.0;
+    const double mass = 2600.0;
+
+    double density;
     double pressure;
+    double viscosity;
 
     public:
     //Constructor
@@ -24,11 +27,15 @@ class Particle{
     Particle();
 
     //Getters
-    std::array<double,3> getPosition();
-    std::array<double,3> getAcceleration();
-    std::array<double,3> getVelocity();
-    double getMass();
-    double getRadius();
+    std::array<double,3> getPosition() const;
+    std::array<double,3> getAcceleration()const;
+    std::array<double,3> getVelocity()const;
+    double getMass()const;
+    double getRadius()const;
+    double getPressure()const;
+    double getViscosity()const;
+    double getDensity()const;
+
 
     //Setters
     void setPosition(double newPosition[3]);
@@ -43,16 +50,12 @@ class Particle{
 
     //SPH Functions
 
-    double calculateDensity(std::vector<Particle> particles, Particle consideredParticle);
+    double calculateDensity(const std::vector<Particle>& particles, double coreRadius);
 
-    double calculatePressure(std::vector<Particle> particles, Particle consideredParticle);
+    double calculatePressure(const std::vector<Particle>& particles, double coreRadius);
 
-    std::array<double,3> calculatePressureForce(std::vector<Particle> particles, double coreRadius,Particle consideredParticle);
+    std::array<double,3> calculatePressureForce(const std::vector<Particle>& particles, double coreRadius);
 
-    std::array<double,3> calculateViscosityForce(std::vector<Particle> particles, double coreRadius, Particle consideredParticle);
-
-
-    
-
+    std::array<double,3> calculateViscosityForce(std::vector<Particle>& particles, double coreRadius);
 };
 #endif
