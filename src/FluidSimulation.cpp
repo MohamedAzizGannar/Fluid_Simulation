@@ -45,9 +45,6 @@ void FluidSimulation::updateDensityAndPressure(){
 }
 void FluidSimulation::applyForces(){
     updateDensityAndPressure();
-
-
-
     for(auto& particle:particles){
         particle.applyForces(particles);
     }
@@ -56,29 +53,31 @@ void FluidSimulation::applyForces(){
 void FluidSimulation::integrateVel(double dt){
     for (auto& particle : particles){
         auto velocity = particle.getVelocity();
-        auto acceleration = particle.getAcceleration();
+        const auto& acceleration = particle.getAcceleration();
         
-        for(int i = 0; i < 3; i ++){
-            velocity[i] += acceleration[i] * dt;
-        }
+        velocity[0] += acceleration[0] * dt;
+        velocity[1] += acceleration[1] * dt;
+        velocity[2] += acceleration[2] * dt;
+        
         particle.setVelocity(velocity);
     }
 }
+inline bool FluidSimulation::isValidVector(const std::array<double, 3>& vec) const {
+    return std::isfinite(vec[0]) && std::isfinite(vec[1]) && std::isfinite(vec[2]);
+}
 void FluidSimulation::predictPositions(double dt){
     for(auto& particle : particles){
-        auto position = particle.getPosition();
-        auto velocity = particle.getVelocity();
+        const auto& position = particle.getPosition();
+        const auto& velocity = particle.getVelocity();
 
-      
-
-        for(int i = 0; i < 3; i++) {
-            if(!std::isfinite(position[i]) || !std::isfinite(velocity[i])) {
-                
-                return; 
-            }
+        if ( !isValidVector(position) || !isValidVector(velocity)){
+            particle.setPosition({0.0, 0.0, 0.0});
+            particle.setVelocity({0.0, 0.0, 0.0});
+            continue;
         }
 
-        auto prevPosition = particle.getPosition();
+        
+
         std::array<double,3> predictedPosition = {
             position[0] + velocity[0] * dt,
             position[1] + velocity[1]* dt,
@@ -94,10 +93,7 @@ void FluidSimulation::resolveCollisions(double dt){
     for(int pass = 0;pass < collisionPasses; pass++){
         for(auto& particle : particles){
             worldBounds.resolveSphereAABBCollision(particle);
-            for(auto& neighbor : particles){
-                if(particle.getId() == neighbor.getId())continue;
-                worldBounds.resolveSphereCollision(particle,neighbor);
-            }
+            
         }
     }
 }
@@ -122,6 +118,5 @@ void FluidSimulation::physicsOperations(double dt){
     predictPositions(dt);
     resolveCollisions(dt);
     updatePositions();
-    applyDamping();
 }
 

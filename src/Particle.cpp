@@ -8,69 +8,90 @@ const double TENSION_COEFFICIENT = 7.28;
 const double GAS_CONSTANT = 300.0;
 const double REST_DENSITY = 1000.0;
 const double GRAVITATIONAL_CONSTANT = 6.674e-11;
-const double CORE_RADIUS = 1.5;
+const double CORE_RADIUS = 1.0;
 const double CORE_RADIUS9 = std::pow(CORE_RADIUS, 9);
+const double CORE_RADIUS6 = std::pow(CORE_RADIUS,6);
+const double CORE_RADIUS2 = std::pow(CORE_RADIUS, 2);
+
 const double MU = 0.00089;
 
 
-double findVector3Length(std::array<double,3> vect){
+const double WPOLY6_COEFF = 315.0 / (64.0 * M_PI * CORE_RADIUS9);
+const double GRAD_WPOLY6_COEFF = -945.0 / (32.0 * M_PI * CORE_RADIUS9);
+const double GRAD_WSPIKY_COEFF = -45.0 / (M_PI * CORE_RADIUS6);
+const double LAPLACIAN_VISC_COEFF = 45.0 / (M_PI * CORE_RADIUS6);
+
+
+double findVector3LengthSquared(const std::array<double,3>& vect){
     auto [x,y,z] = vect;
-    return std::sqrt(x*x + y*y + z*z);
+    return x*x + y*y + z*z;
 }
-std::array<double,3> normalizeVector3(std::array<double,3> vect){
+double findVector3Length(const std::array<double,3>& vect){
     auto [x,y,z] = vect;
-    double len = findVector3Length(vect);
-    if (len == 0 )return{0,0,0};
-    return {x/len,y/len,z/len};
+    return sqrt(x*x + y*y + z*z);
 }
-double Wpoly6(double distance){
-    if(distance < 0.0 || distance > CORE_RADIUS)return 0.0;
-    const double coefficient = 315.0/(64.0*M_PI*std::pow(CORE_RADIUS,9));
-    const double secondMember = std::pow((CORE_RADIUS*CORE_RADIUS - distance*distance),3);
-    return coefficient * secondMember;
-}
-std::array<double,3> gradientWpoly6(const std::array<double,3> vect){
-    const double distance = findVector3Length(vect);
-    if(distance< 0.0 || distance > CORE_RADIUS) return {0.0,0.0,0.0};
-    const double coefficient = - 945.0 / (32.0 * M_PI * std::pow(CORE_RADIUS,9));
-    const double secondMember = std::pow(CORE_RADIUS*CORE_RADIUS - distance * distance , 2);
+std::array<double,3> normalizeVector3(const std::array<double,3>& vect){
+    auto [x,y,z] = vect;
+    double lenSqr = findVector3LengthSquared(vect);
+    if (lenSqr == 0 )return{0,0,0};
+    const double invLen = 1.0 / std::sqrt(lenSqr);
     return {
-        coefficient*secondMember*vect[0]/distance,
-        coefficient*secondMember*vect[1]/distance,
-        coefficient*secondMember*vect[2]/distance
+        invLen * vect[0],
+        invLen * vect[1],
+        invLen * vect[2],
+    };
+}
+double Wpoly6(double distanceSq){
+    if( distanceSq > CORE_RADIUS)return 0.0;
+    const double coefficient = 315.0/(64.0*M_PI*CORE_RADIUS9);
+    const double diff = CORE_RADIUS2 - distanceSq;
+    return coefficient * diff * diff * diff;
+}
+std::array<double,3> gradientWpoly6(const std::array<double,3>& vect){
+    const double distanceSqrd = findVector3LengthSquared(vect);
+    if(distanceSqrd > CORE_RADIUS2) return {0.0,0.0,0.0};
+    const double secondMember = CORE_RADIUS2 -distanceSqrd;
+    return {
+        GRAD_WPOLY6_COEFF*secondMember*secondMember*vect[0],
+        GRAD_WPOLY6_COEFF*secondMember*secondMember*vect[1],
+        GRAD_WPOLY6_COEFF*secondMember*secondMember*vect[2]
     };
 }
 double magnitudeGradientWpoly6(const std::array<double,3>& vect){
+    const double distanceSqrd = findVector3LengthSquared(vect);
     const double distance = findVector3Length(vect);
-    if(distance < 0 || distance > CORE_RADIUS)return 0.0;
-    const double coefficient = - 945.0 / (32.0 * M_PI * std::pow(CORE_RADIUS,9));
-    const double secondMember = std::pow(CORE_RADIUS*CORE_RADIUS - distance * distance , 2);
+
+    if(distanceSqrd > CORE_RADIUS2)return 0.0;
+    const double coefficient = - 945.0 / (32.0 * M_PI * CORE_RADIUS9);
+    const double secondMember = std::pow(CORE_RADIUS2 - distanceSqrd , 2);
     return coefficient * secondMember * distance;
 }
 double  laplacianWpoly6(const std::array<double,3>& vect){
-    const double distance = findVector3Length(vect);
-    if(distance< 0.0 || distance > CORE_RADIUS) return 0.0;
-    const double coefficient = - 945.0 / (32.0 * M_PI * std::pow(CORE_RADIUS,9));
-    const double secondMember = (CORE_RADIUS*CORE_RADIUS - distance * distance);
-    const double thirdMember = (3*distance*distance - CORE_RADIUS * CORE_RADIUS) ;
-    return coefficient * secondMember * thirdMember;
+    const double distanceSqrd = findVector3LengthSquared(vect);
+    if(distanceSqrd > CORE_RADIUS2) return 0.0;
+    const double secondMember = (CORE_RADIUS2 - distanceSqrd);
+    const double thirdMember = (3*distanceSqrd - CORE_RADIUS2) ;
+    return GRAD_WPOLY6_COEFF * secondMember * thirdMember;
 }
 std::array<double,3> gradientWspiky( const std::array<double,3>& vect){
+    const double distanceSqrd = findVector3LengthSquared(vect);
     const double distance = findVector3Length(vect);
-    if(distance<0 || distance > CORE_RADIUS){return {0.0,0.0,0.0};}
-    const double coefficient = -45.0/(M_PI * std::pow(CORE_RADIUS,6));
-    const double secondMember =std::pow(CORE_RADIUS-distance,2); 
+
+    if(distanceSqrd > CORE_RADIUS2 || distance < 1e-12){return {0.0,0.0,0.0};}    
+    const double secondMember = CORE_RADIUS - distance;
+    const double coefficient = GRAD_WSPIKY_COEFF * 3 * secondMember * secondMember / distance;
+    
     return {
-        coefficient * secondMember * vect[0]/distance,
-        coefficient * secondMember * vect[1]/distance,
-        coefficient * secondMember * vect[2]/distance
+        coefficient * secondMember * vect[0],
+        coefficient * secondMember * vect[1],
+        coefficient * secondMember * vect[2]
     };
 }
-double laplacianViscosityKernel(const std::array<double,3>& vect){
-    const double distance = findVector3Length(vect);
-    if(distance < 0 || distance > CORE_RADIUS) return 0.0;
-    const double coefficient = 45.0/(M_PI * std::pow(CORE_RADIUS,6));
-    return coefficient * (distance - CORE_RADIUS);
+double laplacianViscosityKernel(const double& distance){
+    
+    
+    if(distance >= CORE_RADIUS2 || distance < 0) return 0.0;
+    return LAPLACIAN_VISC_COEFF * (CORE_RADIUS - distance);
 }
 
 Particle::Particle(std::array<double,3> initialPosition,std::array<double,3> initialVelocity,std::array<double,3> intialAcceleration, int id):id(id){
@@ -144,46 +165,44 @@ void Particle::updateVelocity(){
     velocity[2] += acceleration[2];
 }
 void Particle::updateDensity(const std::vector<Particle>& particles){
-    double newDensity = this->calculateDensity(particles);
-    this->setDensity(newDensity);
+    setDensity(calculateDensity(particles));
 }
 
 void Particle::updatePressure(const std::vector<Particle>& particles){
-    double newPressure = this->calculatePressure(particles);
-    this->setPressure(newPressure);
+    setPressure(calculatePressure(particles));
 }
 
 //SPH FUNCTIONS
 double Particle::calculateDensity(const std::vector<Particle>& particles)
 {
     double density = 0.0;
+    const auto& pi = getPosition();
+
     for( const Particle& neighbor : particles){
         if (neighbor.getId( ) == this->getId()) continue;
-        std::array<double,3> distanceVector;
-        auto pi = this->getPosition();
-        auto pj = neighbor.getPosition();
-        for(int i =0 ; i < 3; i++)
-        {
-            distanceVector[i] = pi[i] - pj[i];
-        }
-        double distance = findVector3Length(distanceVector);
-        if(distance>CORE_RADIUS)continue;
-        density+= neighbor.getMass() * Wpoly6(distance);
+        const auto& pj = neighbor.getPosition();
+        std::array<double,3> distanceVector={
+            pi[0] - pj[0],
+            pi[1] - pj[1],
+            pi[2] - pj[2]
+        };
+        
+        double distanceSqrd = findVector3LengthSquared(distanceVector);
+        if(distanceSqrd>CORE_RADIUS)continue;
+        density+= neighbor.getMass() * Wpoly6(distanceSqrd);
     }
-    return density < 1e-12 ? 1e-12:density;
+    return std::max(density,1e-12);
 }
 double Particle::calculatePressure(const std::vector<Particle>& particles){
 
- 
+    double pressure = GAS_CONSTANT * (calculateDensity(particles) - REST_DENSITY);
+    return std::max(0.0,pressure);
 
-    double pressure = GAS_CONSTANT * (this->calculateDensity(particles) - REST_DENSITY);
-    pressure = std::max(0.0,pressure);
-    return pressure;
 }
 std::array<double,3> Particle::calculatePressureForce(const std::vector<Particle>& particles){
-
     std::array<double,3> pressureForce = {0.0,0.0,0.0};
-    double pressureI = this->getPressure();
+    double pressureI = getPressure();
+    const auto& position = getPosition();
 
 
     for(const Particle& neighbor: particles){
@@ -192,32 +211,28 @@ std::array<double,3> Particle::calculatePressureForce(const std::vector<Particle
 
         std::array<double,3> direction = {position[0]-particlePosition[0],position[1]-particlePosition[1],position[2]-particlePosition[2]};
 
-        double distance = findVector3Length(direction);
+        const double distance = findVector3Length(direction);
         if(distance<= 0.0001 || distance>=CORE_RADIUS) continue;
-
+        double densityJ = neighbor.getDensity();
+        if(densityJ < 1e-12) continue;
         std::array<double,3> normalizedDirection = normalizeVector3(direction);
 
         double particleMass = neighbor.getMass();
 
-        std::array<double,3> gradW = {0.0,0.0,0.0};
-        std::array<double,3> gradientWSpikyVal = gradientWspiky(normalizedDirection);
-        for(int i = 0; i < gradW.size(); i++)
-        {
-            gradW[i] = gradientWSpikyVal[i];
-        }
+        std::array<double,3> gradW = gradientWspiky(normalizedDirection);
+
         double pressureJ = neighbor.getPressure();
-        double densityJ = neighbor.getDensity();
-        if(densityJ < 1e-12) continue;
-
-        double avgPressure = (pressureI + pressureJ) / 2.0;
-
+        double avgPressure = (pressureI + pressureJ) * 0.5;
         double coefficient = -particleMass * avgPressure / densityJ;
 
-        for(int i = 0; i < pressureForce.size(); i++)
-        {
-            pressureForce[i] += gradW[i] * coefficient;
-            if(std::isnan(pressureForce[i]) || std::isinf(pressureForce[i])) pressureForce[i] = 0.0;
-        }
+        
+        pressureForce[0] += gradW[0] * coefficient;
+        pressureForce[1] += gradW[1] * coefficient;
+        pressureForce[2] += gradW[2] * coefficient;
+
+    }
+    for(auto& force : pressureForce){
+        if(!std::isfinite(force))force = 0.0;
     }
     return pressureForce;
 }
@@ -227,29 +242,43 @@ std::array<double,3> Particle::calculateViscosityForce(const std::vector<Particl
 
     std::array<double,3> viscosityForce = {0.0,0.0,0.0};
 
+    const auto& position = getPosition();
+    const auto& vel = getVelocity();
+
     for(const Particle& neighbor : particles){
         if (neighbor.getId( ) == this->getId()) continue;
-        std::array<double,3> particlePosition = neighbor.getPosition();
+        const std::array<double,3>& neighborPosition = neighbor.getPosition();
 
-        std::array<double,3> direction = {position[0]-particlePosition[0],position[1]-particlePosition[1],position[2]-particlePosition[2]};
+        const std::array<double,3> direction = {position[0]-neighborPosition[0],position[1]-neighborPosition[1],position[2]-neighborPosition[2]};
         double distance = findVector3Length(direction);
-        std::array<double,3> normalizedDirection = normalizeVector3(direction);
+        const std::array<double,3> normalizedDirection = normalizeVector3(direction);
+        
+        const double densityJ = neighbor.getDensity();
 
-        double particleMass = neighbor.getMass();
+        if(densityJ < 1e-12) continue;
+
+        const double neighborMass = neighbor.getMass();
+        const auto& neighborVel = neighbor.getVelocity();
 
 
-        if(distance < CORE_RADIUS && distance > 0){
-            std::array<double,3> velocityDifference= {0,0,0};
-            for(int j = 0; j < velocityDifference.size();j++){
-                velocityDifference[j] = neighbor.getVelocity()[j] - this->getVelocity()[j];
-            }
-            double densityJ = neighbor.getDensity();
-            double laplacianW = laplacianViscosityKernel(direction);
-            for(int j = 0; j <viscosityForce.size(); j++){
-                viscosityForce[j] += MU*particleMass*velocityDifference[j]/densityJ*laplacianW;
-            }
-        }
+        if(distance > CORE_RADIUS || distance < 0)continue;
+        std::array<double,3> velocityDifference= {
+            neighborVel[0] - vel[0],
+            neighborVel[1] - vel[1],
+            neighborVel[2] - vel[2],
+        };
+        const double laplacianW = laplacianViscosityKernel(distance);
+        const double coefficient = MU * neighborMass * laplacianW / densityJ;
+
+
+        viscosityForce[0] += velocityDifference[0] * coefficient;
+        viscosityForce[1] += velocityDifference[1] * coefficient;
+        viscosityForce[2] += velocityDifference[2] * coefficient;
+
     }
+    for(auto& force : viscosityForce){
+        if(!std::isfinite(force))force = 0.0;
+    } 
     return viscosityForce;
 }
 std::array<double,3> Particle::calculateGravitationalPull(const std::vector<Particle>& particles){
@@ -284,16 +313,17 @@ std::array<double,3> Particle::calculateGravity(){
 
 double Particle::calculateSmoothedColorField( const std::vector<Particle>& particles){
     double sum = 0.0;
-    const std::array<double,3> pos = this ->getPosition();
+    const std::array<double,3>& pos = getPosition();
     for(const auto& pj : particles){
-        if (pj.getId( ) == this->getId()) continue;
-        const std::array<double,3> posj = pj.getPosition();
+        if (pj.getId( ) == getId()) continue;
+        const std::array<double,3>& posj = pj.getPosition();
         const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
         const double distance = findVector3Length(vect);
         const double massJ = pj.getMass();
         const double densityJ = pj.getDensity();
-        const double poly6Value = Wpoly6(distance);
         if(densityJ < 1e-6)continue;
+
+        const double poly6Value = Wpoly6(distance);
         const double coefficient = massJ / densityJ;
         sum += poly6Value * coefficient;
     }
@@ -302,77 +332,128 @@ double Particle::calculateSmoothedColorField( const std::vector<Particle>& parti
 
 std::array<double,3> Particle::calculateColorFieldGradient( const std::vector<Particle>& particles){
     std::array<double,3> sum = {0.0,0.0,0.0};
-    const std::array<double,3> pos = this ->getPosition();
+    const std::array<double,3>& pos = getPosition();
     for(const auto& pj : particles){
-        if (pj.getId( ) == this->getId()) continue;
-        const std::array<double,3> posj = pj.getPosition();
+        if (pj.getId( ) == getId()) continue;
+        const std::array<double,3>& posj = pj.getPosition();
         const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
         const double massJ = pj.getMass();
+        const double distanceSq = findVector3LengthSquared(vect);
+        if (distanceSq >= CORE_RADIUS2) continue;
         const double densityJ = pj.getDensity();
-        const std::array<double,3> Wpoly6Gradient = gradientWpoly6(vect);
         if(densityJ < 1e-6)continue;
+
+        const std::array<double,3> Wpoly6Gradient = gradientWpoly6(vect);
         const double coefficient = massJ/densityJ;
-        for(int i = 0; i < sum.size(); i++){
-            sum[i] +=   Wpoly6Gradient[i] * coefficient;
-        }
+        
+        sum[0] +=   Wpoly6Gradient[0] * coefficient;
+        sum[1] +=   Wpoly6Gradient[1] * coefficient;
+        sum[2] +=   Wpoly6Gradient[2] * coefficient;
+
     }
     return sum;
 }
 double Particle::calculateColorFieldLaplacian(  const std::vector<Particle>& particles){
     double sum = 0.0;
-    const std::array<double,3> pos = this ->getPosition();
+    const std::array<double,3>& pos = this ->getPosition();
     for(const auto& pj : particles){
-        if (pj.getId( ) == this->getId()) continue;
-        const std::array<double,3> posj = pj.getPosition();
+        if (pj.getId( ) == getId()) continue;
+        const std::array<double,3>& posj = pj.getPosition();
         const std::array<double,3> vect = {pos[0]-posj[0],pos[1]-posj[1],pos[2]-posj[2]};
         const double massJ = pj.getMass();
+        const double distanceSq = findVector3LengthSquared(vect);
+        if (distanceSq >= CORE_RADIUS2) continue;
         const double densityJ = pj.getDensity();
-        const double Wpoly6Laplacian = laplacianWpoly6(vect);
         if(densityJ < 1e-6)continue;
+        const double Wpoly6Laplacian = laplacianWpoly6(vect);
         const double coefficient = massJ/densityJ; 
-        sum += massJ/densityJ * Wpoly6Laplacian;
+        sum += coefficient * Wpoly6Laplacian;
     }
     return sum;
 }
 double calculateCurvature(double laplacian,const std::array<double,3>& gradient){
-    const double magnitude = findVector3Length(gradient);
-    if(magnitude < 1e-6)return 0.0;
-    const double K = - laplacian / magnitude;
+    const double magnitudeSq = findVector3LengthSquared(gradient);
+    if(magnitudeSq < 1e-12)return 0.0;
+    const double K = - laplacian / sqrt(magnitudeSq);
     return K;
 }
 
-std::array<double,3> Particle::calculateSurfaceTensionForce(  const std::vector<Particle>& particles){
-    const std::array<double,3> pos = this ->getPosition();
-    std::array<double,3> surfaceTensionForce = {0.0,0.0,0.0};
 
-
-    const std::array<double,3> gradient = calculateColorFieldGradient(particles);
-    const double laplacian = calculateColorFieldLaplacian(particles);
-    const double curvature = calculateCurvature(laplacian,gradient);
-    for(int i = 0 ; i < surfaceTensionForce.size(); i++){
-        surfaceTensionForce[i] += -TENSION_COEFFICIENT * curvature * gradient[i];
+ColorFieldProperties Particle::calculateColorFieldProperties(const std::vector<Particle>& particles) {
+    ColorFieldProperties props = {0.0, {0.0, 0.0, 0.0}, 0.0};
+    const auto& pos = getPosition();
+    
+    for (const auto& pj : particles) {
+        if (pj.getId() == id) continue;
+        
+        const auto& posj = pj.getPosition();
+        const std::array<double,3> vect = {
+            pos[0] - posj[0], 
+            pos[1] - posj[1], 
+            pos[2] - posj[2]
+        };
+        
+        const double distanceSq = findVector3LengthSquared(vect);
+        if (distanceSq >= CORE_RADIUS2) continue;
+        
+        const double densityJ = pj.getDensity();
+        if (densityJ < 1e-6) continue;
+        
+        const double coefficient = pj.getMass() / densityJ;
+        
+        const double poly6Value = Wpoly6(distanceSq);
+        const auto gradientValue = gradientWpoly6(vect);
+        const double laplacianValue = laplacianWpoly6(vect);
+        
+        props.field += poly6Value * coefficient;
+        props.gradient[0] += gradientValue[0] * coefficient;
+        props.gradient[1] += gradientValue[1] * coefficient;
+        props.gradient[2] += gradientValue[2] * coefficient;
+        props.laplacian += laplacianValue * coefficient;
     }
     
-    
-    return surfaceTensionForce;
+    return props;
+}
+std::array<double,3> Particle::calculateSurfaceTensionForce(  const std::vector<Particle>& particles){
+    const auto props = calculateColorFieldProperties(particles);
+
+    const double curvature = calculateCurvature(props.laplacian,props.gradient);
+
+    const double coefficient = -TENSION_COEFFICIENT * curvature;
+    return {
+        coefficient * props.gradient[0],
+        coefficient * props.gradient[1],
+        coefficient * props.gradient[2]
+    };
 }
 
+
 void Particle::applyForces(const std::vector<Particle>& particles){
-    std::array<double,3> totalForce = {0.0,0.0,0.0};
 
     const std::array<double,3> pressureForce = calculatePressureForce( particles);
     const std::array<double,3> viscosityForce = calculateViscosityForce( particles);
-    const std::array<double,3> gravitationalForce = calculateGravitationalPull( particles);
     const std::array<double,3> gravity = calculateGravity();
+    const std::array<double,3> surfaceTensionForce = calculateSurfaceTensionForce(particles);
+
 
     
-    for(int i = 0; i < 3; i ++){
-        totalForce[i] = pressureForce[i] + viscosityForce[i] + gravitationalForce[i] + gravity[i];
-    }
+    const std::array<double,3> totalForce = {
+        pressureForce[0] + viscosityForce[0] + surfaceTensionForce[0] + gravity[0],
+        pressureForce[1] + viscosityForce[1] + surfaceTensionForce[1] + gravity[1],
+        pressureForce[2] + viscosityForce[2] + surfaceTensionForce[2] + gravity[2]
+    };
     std::array<double,3> newAcceleration = {0.0, 0.0, 0.0}; 
-    const double density = this->getDensity();
+    const double density = getDensity();
     if (density > 1e-6){
-        
+        const double invDensity = 1.0 / density;
+        setAcceleration({
+            totalForce[0] * invDensity,
+            totalForce[1] * invDensity,
+            totalForce[2] * invDensity
+        });
     }
-    this->setAcceleration(newAcceleration);
+    else{
+        setAcceleration({0.0,0.0,0.0});
+    }
 }
+

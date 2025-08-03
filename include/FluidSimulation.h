@@ -17,10 +17,12 @@
 
 #include <Particle.h>
 #include <Collider.h>
+#include <SubArea.h>
 class FluidSimulation{
     private:
     std::vector<Particle> particles;
     Collider worldBounds;
+
 
     const double fixedTimeStep = 1.0 / 120.0;
     double maxAccumulator = 0.25;
@@ -31,7 +33,9 @@ class FluidSimulation{
     public:
     FluidSimulation(const std::vector<Particle>& particles,const Collider& worldBounds);
     void update(double deltaTime);
+    inline bool isValidVector(const std::array<double, 3>& vec) const;
 
+    std::vector<Particle> getParticles(){return particles;}
     private:
     void updateDensityAndPressure();
 

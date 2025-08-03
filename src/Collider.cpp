@@ -3,17 +3,28 @@
 #include <array>
 #include <cmath>
 
-double dotProductofVect(std::array<double,3> V1, std::array<double,3> V2){
-    return V1[0]*V2[0] + V1[1]*V2[1] + V1[2]*V2[2] ;
+inline double dotProduct(const std::array<double,3>& v1, const std::array<double,3>& v2) {
+    return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
-std::array<double,3> substractArrays(std::array<double,3> v1, std::array<double,3> v2){
-    return {v1[0]-v2[0],v1[1]-v2[1],v1[2]-v2[2]};
+
+inline std::array<double,3> subtract(const std::array<double,3>& v1, const std::array<double,3>& v2) {
+    return {v1[0]-v2[0], v1[1]-v2[1], v1[2]-v2[2]};
 }
-std::array<double,3> addArrays(std::array<double,3> v1, std::array<double,3> v2){
-    return {v1[0]+v2[0],v1[1]+v2[1],v1[2]+v2[2]};
+
+inline std::array<double,3> add(const std::array<double,3>& v1, const std::array<double,3>& v2) {
+    return {v1[0]+v2[0], v1[1]+v2[1], v1[2]+v2[2]};
 }
-std::array<double,3> scaleArray(std::array<double,3> v1,double a){
-    return {v1[0]*a,v1[1]*a,v1[2]*a};
+
+inline std::array<double,3> scale(const std::array<double,3>& v, double scalar) {
+    return {v[0]*scalar, v[1]*scalar, v[2]*scalar};
+}
+
+inline double lengthSquared(const std::array<double,3>& v) {
+    return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+}
+
+inline double length(const std::array<double,3>& v) {
+    return std::sqrt(lengthSquared(v));
 }
 
 
@@ -25,31 +36,38 @@ void Collider::resolveSphereAABBCollision(Particle& particle)const {
     auto velocity = particle.getVelocity();
     const double radius = particle.getRadius();
 
-    bool collisionOccured = false;
+    const double dampingFactor = RESTITUTION * (1.0 - FRICTION);
+    
+    bool collisionOccurred = false;
 
-    for(int i = 0; i < 3; i ++){
-        double minEdge = minBounds[i] + radius;
-        double maxEdge = maxBounds[i] - radius;
-        if(predictedPosition[i] < minEdge){
-            predictedPosition[i] = minEdge;
-            if(velocity[i] < 0)
-            {
-                velocity[i] = - velocity[i] * RESTITUTION;
-                velocity[i] *= (1.0  - FRICTION);
-            }
-            collisionOccured = true;
+    const std::array<double,3> minEdges = {
+        minBounds[0] + radius,
+        minBounds[1] + radius,
+        minBounds[2] + radius
+    };
+    
+    const std::array<double,3> maxEdges = {
+        maxBounds[0] - radius,
+        maxBounds[1] - radius,
+        maxBounds[2] - radius
+    };
 
-        }
-        else if (predictedPosition[i] > maxEdge){
-            predictedPosition[i] = maxEdge;
-            if(velocity[i] > 0){
-                velocity[i] = -velocity[i] * RESTITUTION;
-                velocity[i] *= (1.0 - FRICTION);
+    for (int i = 0; i < 3; ++i) {
+        if (predictedPosition[i] < minEdges[i]) {
+            predictedPosition[i] = minEdges[i];
+            if (velocity[i] < 0) {
+                velocity[i] = -velocity[i] * dampingFactor;
             }
-            collisionOccured = true;
+            collisionOccurred = true;
+        } else if (predictedPosition[i] > maxEdges[i]) {
+            predictedPosition[i] = maxEdges[i];
+            if (velocity[i] > 0) {
+                velocity[i] = -velocity[i] * dampingFactor;
+            }
+            collisionOccurred = true;
         }
     }
-    if(collisionOccured){
+    if (collisionOccurred) {
         particle.setPredictedPosition(predictedPosition);
         particle.setVelocity(velocity);
     }
@@ -57,56 +75,40 @@ void Collider::resolveSphereAABBCollision(Particle& particle)const {
 
 void Collider::resolveSphereCollision(Particle& p1, Particle& p2)const {
     const double radiusSum = p1.getRadius() + p2.getRadius();
-    const auto pos1 = p1.getPosition();
-    const auto pos2 = p2.getPosition();
+    const auto& pos1 = p1.getPosition();
+    const auto& pos2 = p2.getPosition();
     
-    // Calculate squared distance
-    double distSq = 0;
-    std::array<double,3> normal{0,0,0};
-    for(int i=0; i<3; i++) {
-        normal[i] = pos1[i] - pos2[i];
-        distSq += normal[i]*normal[i];
-    }
+    const std::array<double,3> collision = subtract(pos1, pos2);
+    const double distSq = lengthSquared(collision);
+    const double radiusSumSq = radiusSum * radiusSum;
     
-    // Check collision
-    if(distSq >= radiusSum*radiusSum) return;
+    if (distSq >= radiusSumSq || distSq < 1e-12) return;
     
-    // Normalize collision normal
-    const double dist = sqrt(distSq);
-    for(int i=0; i<3; i++) normal[i] /= dist;
+    const double dist = std::sqrt(distSq);
+    const double invDist = 1.0 / dist;
+    const std::array<double,3> normal = scale(collision, invDist);
 
-    // Calculate relative velocity
-    const auto vel1 = p1.getVelocity();
-    const auto vel2 = p2.getVelocity();
-    double velAlongNormal = 0;
-    for(int i=0; i<3; i++) 
-        velAlongNormal += (vel1[i]-vel2[i])*normal[i];
+    const auto& vel1 = p1.getVelocity();
+    const auto& vel2 = p2.getVelocity();
+    const std::array<double,3> relativeVelocity = subtract(vel1, vel2);
+    const double velAlongNormal = dotProduct(relativeVelocity, normal);
 
-    // Only resolve if moving toward each other
-    if(velAlongNormal > 0) return;
+    if (velAlongNormal > 0) return;
 
-    // Calculate impulse 
-    const double restitution = 0.9; // Elasticity coefficient
-    double impulse = -(1 + restitution) * velAlongNormal / 2.0;
+    constexpr double restitution = 0.9;
+    const double impulseMagnitude = -(1.0 + restitution) * velAlongNormal * 0.5;
+    const std::array<double,3> impulse = scale(normal, impulseMagnitude);
 
-    // Apply impulse
-    std::array<double,3> newVel1 = vel1;
-    std::array<double,3> newVel2 = vel2;
-    for(int i=0; i<3; i++) {
-        newVel1[i] += impulse * normal[i];
-        newVel2[i] -= impulse * normal[i];
-    }
+    const std::array<double,3> newVel1 = add(vel1, impulse);
+    const std::array<double,3> newVel2 = subtract(vel2, impulse);
 
-    // Position correction to prevent sticking
-    const double overlap = (radiusSum - dist) * 0.5;
-    std::array<double,3> correctedPos1 = pos1;
-    std::array<double,3> correctedPos2 = pos2;
-    for(int i=0; i<3; i++) {
-        correctedPos1[i] += overlap * normal[i];
-        correctedPos2[i] -= overlap * normal[i];
-    }
+    const double overlap = radiusSum - dist;
+    const double correctionMagnitude = overlap * 0.5;
+    const std::array<double,3> correction = scale(normal, correctionMagnitude);
+    
+    const std::array<double,3> correctedPos1 = add(pos1, correction);
+    const std::array<double,3> correctedPos2 = subtract(pos2, correction);
 
-    // Commit changes
     p1.setVelocity(newVel1);
     p2.setVelocity(newVel2);
     p1.setPosition(correctedPos1);

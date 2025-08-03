@@ -14,6 +14,7 @@
 #include <Particle.h>
 #include <Collider.h>
 #include <FluidSimulation.h>
+#include<Block.h>
 bool running = true;
 void simulationLoop(std::vector<Particle>& particles, Collider& worldBounds,unsigned int counter)
 {
@@ -30,9 +31,9 @@ void simulationLoop(std::vector<Particle>& particles, Collider& worldBounds,unsi
 
         simulation.update(deltaTime);
 
-        
+        std::cout<<"COUNTER"<<frameCounter<<std::endl;
         frameCounter ++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        std::this_thread::sleep_for(std::chrono::milliseconds(32));
 
     }
 }
@@ -80,24 +81,21 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
 
 int main (int argc, char** argv)
 {
-    std::array<double,3> pos1 = {10,10,10};
-    std::array<double,3> pos2 = {20,10,10};
-
-    std::array<double,3> vel1 = {10,0,0};
-    std::array<double,3> vel2 = {-10,0,0};
-
-    
-    Particle p1(pos1,vel1,{0,0,0},1);
-    Particle p2(pos2,vel2,{0,0,0},2);
-
-
-    std::vector<Particle> particles = {p1,p2};
+    std::vector<Particle> particles = initialiseParticlesArray(7,7,7);
     std::array<double,3> minBounds = {-0.5, -0.5, -0.5};
-    std::array<double,3> maxBounds = {50.5, 50.5, 50.5};
+    std::array<double,3> maxBounds = {1000.5, 1000.5, 1000.5};
 
     Collider boxCollider = Collider(minBounds,maxBounds);
-    unsigned int iterations = 50;
+    unsigned int iterations = 100;
+    auto beginTime = std::chrono::high_resolution_clock::now();
     simulationLoop(particles,boxCollider,iterations);
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto runTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime);
+
+    std::cout<<runTime.count()<<"ms RUNTIME\n";
+
+ 
+
   
     return 0;
 }

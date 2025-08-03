@@ -3,6 +3,11 @@
 
 #include <array>
 #include <vector>
+struct ColorFieldProperties {
+    double field;
+    std::array<double,3> gradient;
+    double laplacian;
+};
 class Particle{
 
     private:
@@ -28,6 +33,8 @@ class Particle{
 
     //Default Constructor (Array Initialization)
     Particle();
+
+    ColorFieldProperties calculateColorFieldProperties(const std::vector<Particle>& particles);
 
     //Getters
     std::array<double,3> getPosition() const;
