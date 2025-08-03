@@ -14,9 +14,13 @@
 #include <Particle.h>
 #include <Collider.h>
 #include <FluidSimulation.h>
+#include <Grid.h>
 
 
-FluidSimulation::FluidSimulation(const std::vector<Particle>& particles,const Collider& worldBounds): particles(particles),worldBounds(worldBounds){}
+FluidSimulation::FluidSimulation(const std::vector<Particle>& particles,const Collider& worldBounds): particles(particles),worldBounds(worldBounds){
+    grid = Grid(particles[0].getRadius());
+}
+Grid FluidSimulation::getGrid(){return grid;}
 void FluidSimulation::update(double deltaTime)
 {
     deltaTime = std::min(deltaTime,maxAccumulator);
@@ -25,27 +29,31 @@ void FluidSimulation::update(double deltaTime)
         physicsOperations(fixedTimeStep);
         accumulator -= fixedTimeStep;
     }
-
-    for(auto& particle:particles){
-        auto [x,y,z] = particle.getPosition();
-        auto [vx,vy,vz] = particle.getVelocity();
-
-       // std::cout<<"Particle ID "<<particle.getId()<<" :  Position : ("<<x<<","<<y<<","<<z<<")"<<"   Velocity : ("<<vx<<","<<vy<<","<<vz<<")"<<std::endl;
-    }
 } 
 void FluidSimulation::updateDensityAndPressure(){
     for(auto& particle : particles){
-        particle.updateDensity(particles);
+        std::vector<int> neighborIDs = getGrid().getNeighbors(particle.getPosition());
+        std::vector<Particle> effectiveParticles = {};
+        for(int neighborID : neighborIDs){effectiveParticles.push_back(particles[neighborID]);}
+        particle.updateDensity(effectiveParticles);
     }
     
     for(auto& particle : particles){
-        particle.updatePressure(particles);
+
+        std::vector<int> neighborIDs = getGrid().getNeighbors(particle.getPosition());
+        std::vector<Particle> effectiveParticles = {};
+        for(int neighborID : neighborIDs){effectiveParticles.push_back(particles[neighborID]);}
+        particle.updatePressure(effectiveParticles);
     }
 }
 void FluidSimulation::applyForces(){
     updateDensityAndPressure();
     for(auto& particle:particles){
-        particle.applyForcesOptimised(particles);
+
+        std::vector<int> neighborIDs = getGrid().getNeighbors(particle.getPosition());
+        std::vector<Particle> effectiveParticles = {};
+        for(int neighborID : neighborIDs){effectiveParticles.push_back(particles[neighborID]);}
+        particle.applyForcesOptimised(effectiveParticles);
     }
 }
 

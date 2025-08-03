@@ -6,7 +6,11 @@
 #include <unordered_map>
 #include <Particle.h>
 
-Grid::Grid(double cellSize):cellSize(cellSize){}
+Grid::Grid(int cellSize):cellSize(cellSize){
+}
+Grid::Grid(){
+    cellSize = 1.0;
+}
 
 void Grid::setCellSize(double newCellSize){
     cellSize = newCellSize;

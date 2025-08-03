@@ -10,11 +10,12 @@
 
 class Grid{
     private:
-    double cellSize;
+    int cellSize;
     std::unordered_map<int,std::vector<int>> cellHashMap; // int = Hashed Value of cell Coordinates || std::vector<int> IDs of the contained Particles
 
     public:
-    Grid(double cellSize);
+    Grid();
+    Grid( int cellSize);
     void setCellSize(double newCellSize);
     double getCellSize();
 

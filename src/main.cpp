@@ -32,7 +32,7 @@ void simulationLoop(std::vector<Particle>& particles, Collider& worldBounds,unsi
         simulation.update(deltaTime);
 
         frameCounter ++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(8));
 
     }
 }
@@ -93,18 +93,15 @@ void simulate(int repetitions,int frames,Collider boxCollider,std::vector<Partic
 }
 int main (int argc, char** argv)
 {
-    std::vector<Particle> particles = initialiseParticlesArray(13,13,13);
+    std::vector<Particle> particles = initialiseParticlesArray(10,10,10);
     std::array<double,3> minBounds = {-0.5, -0.5, -0.5};
-    std::array<double,3> maxBounds = {100.5, 100.5, 100.5};
+    std::array<double,3> maxBounds = {15.5, 15.5, 15.5};
 
     Collider boxCollider = Collider(minBounds,maxBounds);
-    unsigned int frames = 100;
-    unsigned int repetitions = 4;
+    unsigned int frames = 60;
+    unsigned int repetitions = 10;
 
     simulate(repetitions,frames,boxCollider,particles);
 
- 
-
-  
     return 0;
 }

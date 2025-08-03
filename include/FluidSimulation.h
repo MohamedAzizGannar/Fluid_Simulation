@@ -17,10 +17,12 @@
 
 #include <Particle.h>
 #include <Collider.h>
+#include <Grid.h>   
 class FluidSimulation{
     private:
     std::vector<Particle> particles;
     Collider worldBounds;
+    Grid grid;
 
 
     const double fixedTimeStep = 1.0 / 120.0;
@@ -33,8 +35,9 @@ class FluidSimulation{
     FluidSimulation(const std::vector<Particle>& particles,const Collider& worldBounds);
     void update(double deltaTime);
     inline bool isValidVector(const std::array<double, 3>& vec) const;
-
     std::vector<Particle> getParticles(){return particles;}
+
+    Grid getGrid();
     private:
     void updateDensityAndPressure();
 

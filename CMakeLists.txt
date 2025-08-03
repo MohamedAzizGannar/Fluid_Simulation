@@ -10,4 +10,5 @@ src/main.cpp
 src/Particle.cpp
 src/Collider.cpp
 src/FluidSimulation.cpp
+src/Grid.cpp
 )
