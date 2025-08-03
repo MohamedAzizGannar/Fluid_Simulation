@@ -17,7 +17,6 @@
 
 #include <Particle.h>
 #include <Collider.h>
-#include <SubArea.h>
 class FluidSimulation{
     private:
     std::vector<Particle> particles;

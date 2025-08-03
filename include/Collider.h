@@ -9,8 +9,8 @@ class Collider{
     const std::array<double,3> minBounds;
     const std::array<double,3> maxBounds;
 
-    const double FRICTION = 0.1;
-    const double RESTITUTION = 1.0;
+    const double FRICTION = 0.2;
+    const double RESTITUTION = 0.8;
 
     public:
 

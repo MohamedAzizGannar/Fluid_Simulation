@@ -31,9 +31,8 @@ void simulationLoop(std::vector<Particle>& particles, Collider& worldBounds,unsi
 
         simulation.update(deltaTime);
 
-        std::cout<<"COUNTER"<<frameCounter<<std::endl;
         frameCounter ++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(32));
+        std::this_thread::sleep_for(std::chrono::milliseconds(8));
 
     }
 }
@@ -78,21 +77,31 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
     }
     return particles;
 }
-
+void simulate(int repetitions,int frames,Collider boxCollider,std::vector<Particle> particles){
+    double totalRunTime = 0;
+    for(int i = 0; i < repetitions; i++){
+        auto beginTime = std::chrono::high_resolution_clock::now();
+        simulationLoop(particles,boxCollider,frames);
+        auto endTime = std::chrono::high_resolution_clock::now();
+        auto runTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime);
+        auto runTimeVal = runTime.count();
+        totalRunTime += runTimeVal;
+        std::cout<<"Repetition "<<i<<" : "<<runTimeVal<<"ms\n";
+    }
+    double avgRunTime = totalRunTime/ repetitions;
+    std::cout<<"Average RunTime for "<<std::to_string(particles.size())<<" particles and "<<std::to_string(frames)<<" frames : "<<avgRunTime<<"ms\n";
+}
 int main (int argc, char** argv)
 {
     std::vector<Particle> particles = initialiseParticlesArray(7,7,7);
     std::array<double,3> minBounds = {-0.5, -0.5, -0.5};
-    std::array<double,3> maxBounds = {1000.5, 1000.5, 1000.5};
+    std::array<double,3> maxBounds = {100.5, 100.5, 100.5};
 
     Collider boxCollider = Collider(minBounds,maxBounds);
-    unsigned int iterations = 100;
-    auto beginTime = std::chrono::high_resolution_clock::now();
-    simulationLoop(particles,boxCollider,iterations);
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto runTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime);
+    unsigned int frames = 100;
+    unsigned int repetitions = 10;
 
-    std::cout<<runTime.count()<<"ms RUNTIME\n";
+    simulate(repetitions,frames,boxCollider,particles);
 
  
 

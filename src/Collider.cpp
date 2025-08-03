@@ -95,8 +95,7 @@ void Collider::resolveSphereCollision(Particle& p1, Particle& p2)const {
 
     if (velAlongNormal > 0) return;
 
-    constexpr double restitution = 0.9;
-    const double impulseMagnitude = -(1.0 + restitution) * velAlongNormal * 0.5;
+    const double impulseMagnitude = -(1.0 + RESTITUTION) * velAlongNormal * 0.5;
     const std::array<double,3> impulse = scale(normal, impulseMagnitude);
 
     const std::array<double,3> newVel1 = add(vel1, impulse);

@@ -86,5 +86,7 @@ class Particle{
     std::array<double,3> calculateSurfaceTensionForce(  const std::vector<Particle>& particles);
 
     void applyForces(const std::vector<Particle>& particles);
+    void applyForcesOptimised(const std::vector<Particle>& particles);
+
 };
 #endif
