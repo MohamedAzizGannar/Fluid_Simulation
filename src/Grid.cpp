@@ -17,7 +17,7 @@ void Grid::setCellSize(double newCellSize){
 }
 double Grid::getCellSize(){return cellSize;}
 
-void Grid::insertParticle(int particleID,const std::array<double,3>& particlePosition){
+void Grid::insertParticle(int particleID,const float3& particlePosition){
 
     auto [cellX,cellY,cellZ] = getCellCoordinates(particlePosition);
     
@@ -42,7 +42,7 @@ int Grid::hashCellCoordinates(const std::array<int,3>& cellCoordinates){
     return (x*p1 + y*p2 + z*p3);
 }
 
-std::array<int,3> Grid::getCellCoordinates( const std::array<double,3>& particlePosition){
+std::array<int,3> Grid::getCellCoordinates( const float3& particlePosition){
     auto [x,y,z] = particlePosition;
     int cellX = std::floor(x/cellSize);
     int cellY = std::floor(y/cellSize);
@@ -51,7 +51,7 @@ std::array<int,3> Grid::getCellCoordinates( const std::array<double,3>& particle
     return {cellX,cellY,cellZ};
 }
 
-std::vector<int> Grid::getNeighbors(const std::array<double,3>& particlePosition){
+std::vector<int> Grid::getNeighbors(const float3& particlePosition){
     auto [cellX,cellY,cellZ] = getCellCoordinates(particlePosition);
     std::vector<int> neighborParticles = {};
     for(int dx = -1; dx <= 1; dx++){

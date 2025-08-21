@@ -16,29 +16,6 @@
 #include <FluidSimulation.h>
 #include<Block.h>
 bool running = true;
-void simulationLoop(std::vector<Particle>& particles, Collider& worldBounds,unsigned int counter)
-{
-    FluidSimulation simulation(particles,worldBounds);
-    auto lastTime = std::chrono::high_resolution_clock::now();
-    unsigned int frameCounter = 0;
-    while (frameCounter < counter ){
-        int index = 1;
-
-        
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        double deltaTime = std::chrono::duration<double>(currentTime - lastTime).count();
-        lastTime = currentTime;
-
-        simulation.update(deltaTime);
-
-        frameCounter ++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(8));
-
-    }
-}
-
-
-
 double getRoundedRandom(double min, double max, int decimals)
 {
     static std::random_device rd;
@@ -61,11 +38,11 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
     for(int i = 0; i< rows;i++){
         for(int j = 0; j < cols; j++){
             for(int k = 0; k < depth; k++){
-                std::array<double, 3> pos = {static_cast<double>(i)*2. + getRoundedRandom(-0.1, 0.1, 2),
+                const float3 pos = {static_cast<double>(i)*2. + getRoundedRandom(-0.1, 0.1, 2),
                              static_cast<double>(j)*2. + getRoundedRandom(-0.1, 0.1, 2),
                              static_cast<double>(k)*2. + getRoundedRandom(-0.1, 0.1, 2)};
-                std::array <double, 3> cst = {0,0,0};
-                std::array <double, 3> vel = {static_cast<double>(i) + getRoundedRandom(-0.1, 0.1, 2),
+                const float3 cst = {0,0,0};
+                const float3 vel = {static_cast<double>(i) + getRoundedRandom(-0.1, 0.1, 2),
                              static_cast<double>(j) + getRoundedRandom(-0.1, 0.1, 2),
                              static_cast<double>(k) + getRoundedRandom(-0.1, 0.1, 2)};
 
@@ -77,31 +54,45 @@ std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
     }
     return particles;
 }
-void simulate(int repetitions,int frames,Collider boxCollider,std::vector<Particle> particles){
-    double totalRunTime = 0;
-    for(int i = 0; i < repetitions; i++){
-        auto beginTime = std::chrono::high_resolution_clock::now();
-        simulationLoop(particles,boxCollider,frames);
-        auto endTime = std::chrono::high_resolution_clock::now();
-        auto runTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - beginTime);
-        auto runTimeVal = runTime.count();
-        totalRunTime += runTimeVal;
-        std::cout<<"Repetition "<<i<<" : "<<runTimeVal<<"ms\n";
+
+float3 minBounds = {-0.5, -0.5, -0.5};
+float3 maxBounds = {50.5, 50.5, 50.5};
+
+Collider boxCollider = Collider(minBounds,maxBounds);
+std::vector<Particle> particles = initialiseParticlesArray(20,20,20);
+
+void runSimulation(double durationSeconds){
+    FluidSimulation sim(particles,boxCollider);
+    auto testStart = std::chrono::high_resolution_clock::now();
+    auto lastPrint = testStart;
+    while(true){
+        auto now = std::chrono::high_resolution_clock::now();
+
+        auto elapsed = std::chrono::duration<double>(now - testStart).count();
+
+        if (elapsed >= durationSeconds) break;
+
+        sim.update(8);
+
+         auto printElapsed = std::chrono::duration<double>(now- lastPrint).count();
+        if(printElapsed >1.0){
+            std::cout<<1000/printElapsed<<std::endl;
+            lastPrint = now;
+        }
+
     }
-    double avgRunTime = totalRunTime/ repetitions;
-    std::cout<<"Average RunTime for "<<std::to_string(particles.size())<<" particles and "<<std::to_string(frames)<<" frames : "<<avgRunTime<<"ms\n";
+
 }
+
 int main (int argc, char** argv)
 {
-    std::vector<Particle> particles = initialiseParticlesArray(10,10,10);
-    std::array<double,3> minBounds = {-0.5, -0.5, -0.5};
-    std::array<double,3> maxBounds = {15.5, 15.5, 15.5};
-
-    Collider boxCollider = Collider(minBounds,maxBounds);
     unsigned int frames = 60;
     unsigned int repetitions = 10;
+    double targetFPS = 60.;
+    double targetFrameTime = 1/targetFPS;
 
-    simulate(repetitions,frames,boxCollider,particles);
+
+    runSimulation(5);
 
     return 0;
 }

@@ -3,19 +3,102 @@
 
 #include <array>
 #include <vector>
+
+struct float3{
+    double x;
+    double y;
+    double z;
+
+    float3 (double _x, double _y, double _z): x(_x),y(_y),z(_z){}
+    float3():x(0),y(0),z(0){}
+    double& operator[](int i) {
+        return (&x)[i];
+    }
+    
+    const double& operator[](int i) const {
+        return (&x)[i];
+    }
+
+    float3 operator+(const float3& other)const{
+        return(float3(x+other.x,y+other.y,z+other.z));
+    }
+    float3 operator+(const float& other)const{
+        return(float3(x+other,y+other,z+other));
+    }
+    float3 operator-(const float& other)const{
+        return(float3(x-other,y-other,z-other));
+    }
+    float3 operator-(const float3& other)const{
+        return(float3(x-other.x,y-other.y,z-other.z));
+    }
+    
+    float3 operator*(float scalar) const {
+        return float3(x * scalar, y * scalar, z * scalar);
+    }
+    
+    float3 operator/(float scalar) const {
+        return float3(x / scalar, y / scalar, z / scalar);
+    }
+    float3& operator+=(const float3& other) {
+        x += other.x;
+        y += other.y;
+        z += other.z;
+        return *this;
+    }
+    
+    float3& operator-=(const float3& other) {
+        x -= other.x;
+        y -= other.y;
+        z -= other.z;
+        return *this;
+    }
+    
+    float3& operator*=(float factor) {
+        x *= factor;
+        y *= factor;
+        z *= factor;
+        return *this;
+    }
+    
+    float3& operator/=(float factor) {
+        x /= factor;
+        y /= factor;
+        z /= factor;
+        return *this;
+    }
+
+    float dot(const float3& other) const {
+        return x * other.x + y * other.y + z * other.z;
+    }
+    
+    
+    
+    double lengthSQR()const{
+        return (x*x + y*y + z*z);
+    }
+    double length()const{
+        return sqrt(x*x + y*y + z*z);
+    }
+    float3 normalize() const{
+        double invLen = 1/length();
+        
+        return invLen>0? *this*invLen :float3();
+    }
+
+};
 struct ColorFieldProperties {
     double field;
-    std::array<double,3> gradient;
+    float3 gradient;
     double laplacian;
 };
 class Particle{
 
     private:
-    std::array<double,3> position;
-    std::array<double,3> predictedPosition;
+    float3 position;
+    float3 predictedPosition;
 
-    std::array<double,3> velocity;
-    std::array<double,3> acceleration;
+    float3 velocity;
+    float3 acceleration;
 
 
     const double radius = 0.5;
@@ -29,7 +112,7 @@ class Particle{
 
     public:
     //Constructor
-    Particle(std::array<double,3> initialPosition,std::array<double,3> initialVelocity,std::array<double,3> intialAcceleration, int id);
+    Particle(float3 initialPosition,float3 initialVelocity,float3 intialAcceleration, int id);
 
     //Default Constructor (Array Initialization)
     Particle();
@@ -37,11 +120,11 @@ class Particle{
     ColorFieldProperties calculateColorFieldProperties(const std::vector<Particle>& particles);
 
     //Getters
-    std::array<double,3> getPosition() const;
-    std::array<double,3> getPredictedPosition() const;
+    float3 getPosition() const;
+    float3 getPredictedPosition() const;
 
-    std::array<double,3> getAcceleration()const;
-    std::array<double,3> getVelocity()const;
+    float3 getAcceleration()const;
+    float3 getVelocity()const;
     double getMass()const;
     double getRadius()const;
     double getPressure()const;
@@ -50,10 +133,10 @@ class Particle{
 
 
     //Setters
-    void setPosition(std::array<double,3>  newPosition);
-    void setPredictedPosition(std::array<double,3>  newPredictedPosition);
-    void setVelocity(std::array<double,3> newVelocity);
-    void setAcceleration(std::array<double,3> newAcceleration);
+    void setPosition(float3  newPosition);
+    void setPredictedPosition(float3  newPredictedPosition);
+    void setVelocity(float3 newVelocity);
+    void setAcceleration(float3 newAcceleration);
     void setDensity(double newDensity);
     void setPressure(double newPressure);
     void setId(int i);
@@ -73,17 +156,17 @@ class Particle{
 
     double calculatePressure(const std::vector<Particle>& particles);
 
-    std::array<double,3> calculatePressureForce(const std::vector<Particle>& particles);
+    float3 calculatePressureForce(const std::vector<Particle>& particles);
 
-    std::array<double,3> calculateViscosityForce(const std::vector<Particle>& particles);
+    float3 calculateViscosityForce(const std::vector<Particle>& particles);
     
-    std::array<double,3> calculateGravitationalPull(const std::vector<Particle>& particles);
-    std::array<double,3> calculateGravity();
+    float3 calculateGravitationalPull(const std::vector<Particle>& particles);
+    float3 calculateGravity();
 
     double calculateSmoothedColorField( const std::vector<Particle>& particles);
-    std::array<double,3> calculateColorFieldGradient( const std::vector<Particle>& particles);
+    float3 calculateColorFieldGradient( const std::vector<Particle>& particles);
     double calculateColorFieldLaplacian( const std::vector<Particle>& particles);
-    std::array<double,3> calculateSurfaceTensionForce(  const std::vector<Particle>& particles);
+    float3 calculateSurfaceTensionForce(  const std::vector<Particle>& particles);
 
     void applyForces(const std::vector<Particle>& particles);
     void applyForcesOptimised(const std::vector<Particle>& particles);

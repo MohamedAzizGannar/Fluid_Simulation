@@ -21,9 +21,9 @@ class Grid{
 
 
     void clear();
-    void insertParticle(int particleID, const std::array<double,3>& particlePosition);
-    std::array<int,3> getCellCoordinates( const std::array<double,3>& particlePosition);
-    std::vector<int> getNeighbors( const std::array<double,3>& particlePosition);
+    void insertParticle(int particleID, const float3& particlePosition);
+    std::array<int,3> getCellCoordinates( const float3& particlePosition);
+    std::vector<int> getNeighbors( const float3& particlePosition);
     void rebuild(const std::vector<Particle>& particles);
 
     private:

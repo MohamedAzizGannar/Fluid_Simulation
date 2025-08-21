@@ -62,15 +62,13 @@ void FluidSimulation::integrateVel(double dt){
         auto velocity = particle.getVelocity();
         const auto& acceleration = particle.getAcceleration();
         
-        velocity[0] += acceleration[0] * dt;
-        velocity[1] += acceleration[1] * dt;
-        velocity[2] += acceleration[2] * dt;
+        velocity += acceleration * dt;
         
         particle.setVelocity(velocity);
     }
 }
-inline bool FluidSimulation::isValidVector(const std::array<double, 3>& vec) const {
-    return std::isfinite(vec[0]) && std::isfinite(vec[1]) && std::isfinite(vec[2]);
+inline bool FluidSimulation::isValidVector(const float3& vec) const {
+    return std::isfinite(vec.x) && std::isfinite(vec.y) && std::isfinite(vec.z);
 }
 void FluidSimulation::predictPositions(double dt){
     for(auto& particle : particles){
@@ -85,11 +83,7 @@ void FluidSimulation::predictPositions(double dt){
 
         
 
-        std::array<double,3> predictedPosition = {
-            position[0] + velocity[0] * dt,
-            position[1] + velocity[1]* dt,
-            position[2] + velocity[2]* dt
-        };
+        float3 predictedPosition = position + velocity * dt;
        
         particle.setPredictedPosition(predictedPosition);
     }
@@ -112,9 +106,7 @@ void FluidSimulation::updatePositions(){
 void FluidSimulation::applyDamping(){
     for (auto& particle : particles) {
         auto velocity = particle.getVelocity();
-        velocity[0] *= DAMPING;
-        velocity[1] *= DAMPING;
-        velocity[2] *= DAMPING;
+        velocity *= DAMPING;
         particle.setVelocity(velocity);
     }
 }
