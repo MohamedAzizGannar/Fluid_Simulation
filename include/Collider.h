@@ -9,8 +9,8 @@ class Collider{
     const float3 minBounds;
     const float3 maxBounds;
 
-    const double FRICTION = 0.2;
-    const double RESTITUTION = 0.8;
+    const double FRICTION = 0.1;
+    const double RESTITUTION = 0.9;
 
     public:
 

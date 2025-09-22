@@ -18,7 +18,7 @@ void Collider::resolveSphereAABBCollision(Particle& particle)const {
     
     bool collisionOccurred = false;
 
-    const float3 minEdges = minBounds+ radius;
+    const float3 minEdges = minBounds + radius;
     
     const float3 maxEdges = maxBounds - radius;
 

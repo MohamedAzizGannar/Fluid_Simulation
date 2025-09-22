@@ -37,7 +37,7 @@ class FluidSimulation{
     public:
     FluidSimulation(const std::vector<Particle>& particles,const Collider& worldBounds);
     inline bool isValidVector(const float3& vec) const;
-    std::vector<Particle> getParticles(){return particles;}
+    const std::vector<Particle>& getParticles() const;
     void setTargetPhysicsRate(float hz);
     void update();
 

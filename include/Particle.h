@@ -36,6 +36,10 @@ struct float3{
         return float3(x * scalar, y * scalar, z * scalar);
     }
     
+     float3 operator*(const double scalar) const {
+        return float3(x * scalar, y * scalar, z * scalar);
+    }
+    
     float3 operator/(float scalar) const {
         return float3(x / scalar, y / scalar, z / scalar);
     }
@@ -101,7 +105,7 @@ class Particle{
     float3 acceleration;
 
 
-    const double radius = 0.5;
+    const double radius = 1.f;
 
     const double mass = 1.0;
 

@@ -5,17 +5,17 @@
 #include <cmath>
 
 const double TENSION_COEFFICIENT = 0.1;
-const double GAS_CONSTANT = 400.0;
-const double REST_DENSITY = 1000.0;
+const double GAS_CONSTANT = 4000.0;
+const double REST_DENSITY = 1.0;
 
 const double GRAVITATIONAL_CONSTANT = 6.674e-11;
 
-const double CORE_RADIUS = 1.5;
+const double CORE_RADIUS = 4.0;
 const double CORE_RADIUS9 = std::pow(CORE_RADIUS, 9);
 const double CORE_RADIUS6 = std::pow(CORE_RADIUS,6);
 const double CORE_RADIUS2 = std::pow(CORE_RADIUS, 2);
 
-const double MU = 0.1;
+const double MU = 1.0;
 
 
 const double WPOLY6_COEFF = 315.0 / (64.0 * M_PI * CORE_RADIUS9);
@@ -54,11 +54,12 @@ float3 gradientWspiky( const float3& vect){
     const double distanceSqrd = vect.lengthSQR();
     const double distance = vect.length();
 
-    if(distanceSqrd > CORE_RADIUS2 || distance < 1e-12){return {0.0,0.0,0.0};}    
+    if(distanceSqrd > CORE_RADIUS2 || distance < 1e-12){return {0.0,0.0,0.0};}   
+    float3 dir = vect / distance; // normalize
+ 
     const double secondMember = CORE_RADIUS - distance;
-    const double coefficient = GRAD_WSPIKY_COEFF * 3 * secondMember * secondMember / distance;
-    const double factor = coefficient * secondMember;
-    return vect*factor;
+    const double coefficient = GRAD_WSPIKY_COEFF * 3 * secondMember * secondMember ;
+    return dir*coefficient;
 }
 double laplacianViscosityKernel(const double& distance){
     
@@ -136,7 +137,7 @@ void Particle::updatePressure(const std::vector<Particle>& particles){
 //SPH FUNCTIONS
 double Particle::calculateDensity(const std::vector<Particle>& particles)
 {
-    double density = 0.0;
+    double density = getMass() *Wpoly6(0.0);
     const auto& myPos = getPosition();
 
     for( const Particle& neighbor : particles){
@@ -155,7 +156,7 @@ double Particle::calculatePressure(const std::vector<Particle>& particles){
 
 }
 float3 Particle::calculateGravity(){
-    return {0.0,-9.81,0.0};
+    return {0.0,9.81,0.0};
 }
 
 
@@ -212,7 +213,6 @@ void Particle::applyForcesOptimised(const std::vector<Particle>& particles){
     }
 
     for(const auto& neighbor : particles){
-        if(neighbor.getId() == getId())continue;
 
         const auto& neighborPos = neighbor.getPosition();
         const float3 vect = myPos - neighborPos;
@@ -264,7 +264,10 @@ void Particle::applyForcesOptimised(const std::vector<Particle>& particles){
     const auto gravity = calculateGravity();
 
 
-    const float3 totalForce = pressureForce + viscosityForce + surfaceTensionForce + gravity;
+    const float3 totalForce = pressureForce + viscosityForce  + gravity + surfaceTensionForce;
+    std::cout<<"PRESSUREFORCE"<<
+                pressureForce.x<<","<<
+                pressureForce.y<<"\n";
 
     const double invDensity = 1.0 / myDensity;
     setAcceleration(totalForce*invDensity);

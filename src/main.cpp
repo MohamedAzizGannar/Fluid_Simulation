@@ -39,23 +39,28 @@ double roundDouble(double num,uint8_t decimals)
     return std::round(num*scale) /scale;
 }
 
-std::vector<Particle> populateParticles(int numberOfParticles, std::vector<Particle> particles){
-    double baseSpacing = PARTICLE_RADIUS * 2.;
+void populateParticles(int numberOfParticles, std::vector<Particle>& particles){
+    double baseSpacing = 1.;
     int side = std::cbrt(numberOfParticles);
     int count = 0;
+    float maxX = 0;
+    float maxY = 0;
+
     for(int x = 0 ; x < side; x++){
         for(int y = 0; y < side ; y++){
             for(int z = 0; z < side; z++){
                 float3 pos = {x*baseSpacing,y*baseSpacing,z*baseSpacing};
                 float3 vel = {getRoundedRandom(-1.,1.,1),getRoundedRandom(-1.,1.,1),getRoundedRandom(-1.,1.,1)};
                 float3 acc = {0.,0.,0.};
-
+                if(x*baseSpacing > maxX) maxX = x*baseSpacing;
+                if(y*baseSpacing > maxY) maxY = y*baseSpacing;
+                
                 particles.emplace_back(pos,vel,acc,count);
                 count++;                
             }
         }
     }
-    return particles;
+    std::cout<<maxX<<"\n "<<maxY<<"\n";
 }
 
 
@@ -66,41 +71,47 @@ int main (int argc, char** argv)
     populateParticles(500,particles);
 
     float3 minBounds = {0,0,0};
-    float3 maxBounds = {50,50,50};
+    float3 maxBounds = {18,18,18};
 
     Collider boxCollider(minBounds,maxBounds);
 
     FluidSimulation simulation(particles,boxCollider);
-    simulation.setTargetPhysicsRate(60.0f);
+    simulation.setTargetPhysicsRate(120.0f);
     
     InitWindow(SCREEN_WIDTH,SCREEN_HEIGHT,"simulation");
-    SetTargetFPS(60);
+    SetTargetFPS(120);
 
-    Camera3D camera;
-    camera.position = {30.0f, 30.0f, 30.0f};
-    camera.target = {0.0f, 0.0f, 0.0f};
-    camera.up = {0.0f, 1.0f, 0.0f};
-    camera.fovy = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    double multiplicationFactorX = 900. / 18.;
+    double multiplicationFactorY = 700. / 18.;
+
 
     while(!WindowShouldClose()){
         simulation.update();
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        BeginMode3D(camera);
 
         // Draw bounds
-        DrawCubeWires({25, 25, 25}, 50, 50, 50, GRAY);
+        DrawRectangleLines(0,0,900,700,RED);
 
         // Draw particles
-        for (const auto& p : particles) {
-            auto pos = p.getPosition();
-            DrawSphere({(float)pos.x, (float)pos.y, (float)pos.z}, 0.2f, BLUE);
+        for(int i = 0; i < simulation.getParticles().size();i ++){
+    
+            auto pos = simulation.getParticles()[i].getPosition();
+            double x = pos.x * multiplicationFactorX;
+            double y = pos.y * multiplicationFactorY;
+
+            auto vel = simulation.getParticles()[i].getVelocity();
+
+            double velx = vel.x ;
+            double vely = vel.y ;
+            DrawCircle(x,y,5.f,BLUE);
+            DrawLine(x,y,x+velx,y+vely,BLACK);
+
+
+
         }
-
-        EndMode3D();
-
+     
         DrawFPS(10, 10);
         EndDrawing();
     }

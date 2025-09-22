@@ -26,7 +26,7 @@ FluidSimulation::FluidSimulation(const std::vector<Particle>& particles,const Co
                     fixedTimeStep(1.0f / 60.0f),
                     timeAccumulator(0.0f),
                     maxPhysicsStepsPerFrame(1){
-    grid = Grid(2.0);
+    grid = Grid(5.0);
 }
 Grid FluidSimulation::getGrid(){return grid;}
 void FluidSimulation::setTargetPhysicsRate(float hz){
@@ -76,6 +76,7 @@ void FluidSimulation::integrateVel(double dt){
         const auto& acceleration = particle.getAcceleration();
         
         velocity += acceleration * dt;
+        velocity *= 0.99;
         
         particle.setVelocity(velocity);
     }
@@ -121,4 +122,8 @@ void FluidSimulation::updatePhysics(float dt){
     resolveCollisions(dt);
     updatePositions();
 
+}
+
+const std::vector<Particle>& FluidSimulation::getParticles() const{
+    return particles;
 }
