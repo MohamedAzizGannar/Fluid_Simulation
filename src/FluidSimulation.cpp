@@ -16,33 +16,43 @@
 #include <FluidSimulation.h>
 #include <Grid.h>
 
-
-FluidSimulation::FluidSimulation(const std::vector<Particle>& particles,const Collider& worldBounds): particles(particles),worldBounds(worldBounds){
-    grid = Grid(particles[0].getRadius());
+inline bool FluidSimulation::isValidVector(const float3& vec) const {
+    return std::isfinite(vec.x) && std::isfinite(vec.y) && std::isfinite(vec.z);
+}
+FluidSimulation::FluidSimulation(const std::vector<Particle>& particles,const Collider& worldBounds): 
+                    particles(particles),
+                    worldBounds(worldBounds),
+                    targetPhysicsRate(60.0f), 
+                    fixedTimeStep(1.0f / 60.0f),
+                    timeAccumulator(0.0f),
+                    maxPhysicsStepsPerFrame(1){
+    grid = Grid(1.);
 }
 Grid FluidSimulation::getGrid(){return grid;}
-void FluidSimulation::update(double deltaTime)
-{
-    deltaTime = std::min(deltaTime,maxAccumulator);
-    accumulator += deltaTime;
-    while(accumulator >= fixedTimeStep){
-        physicsOperations(fixedTimeStep);
-        accumulator -= fixedTimeStep;
+void FluidSimulation::setTargetPhysicsRate(float hz){
+    targetPhysicsRate = hz;
+    fixedTimeStep = 1/ targetPhysicsRate;
+}
+void FluidSimulation::update(){
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime).count();
+    lastFrameTime = currentTime;
+    deltaTime = std::min(deltaTime,0.25f);
+    timeAccumulator += deltaTime;
+    int physicsSteps = 0;
+    while (timeAccumulator >= fixedTimeStep && physicsSteps < maxPhysicsStepsPerFrame) {
+        updatePhysics(fixedTimeStep);
+        timeAccumulator -= fixedTimeStep;
+        physicsSteps++;
     }
-} 
+    
+}
 void FluidSimulation::updateDensityAndPressure(){
     for(auto& particle : particles){
         std::vector<int> neighborIDs = getGrid().getNeighbors(particle.getPosition());
         std::vector<Particle> effectiveParticles = {};
         for(int neighborID : neighborIDs){effectiveParticles.push_back(particles[neighborID]);}
         particle.updateDensity(effectiveParticles);
-    }
-    
-    for(auto& particle : particles){
-
-        std::vector<int> neighborIDs = getGrid().getNeighbors(particle.getPosition());
-        std::vector<Particle> effectiveParticles = {};
-        for(int neighborID : neighborIDs){effectiveParticles.push_back(particles[neighborID]);}
         particle.updatePressure(effectiveParticles);
     }
 }
@@ -67,9 +77,7 @@ void FluidSimulation::integrateVel(double dt){
         particle.setVelocity(velocity);
     }
 }
-inline bool FluidSimulation::isValidVector(const float3& vec) const {
-    return std::isfinite(vec.x) && std::isfinite(vec.y) && std::isfinite(vec.z);
-}
+
 void FluidSimulation::predictPositions(double dt){
     for(auto& particle : particles){
         const auto& position = particle.getPosition();
@@ -94,7 +102,6 @@ void FluidSimulation::resolveCollisions(double dt){
     for(int pass = 0;pass < collisionPasses; pass++){
         for(auto& particle : particles){
             worldBounds.resolveSphereAABBCollision(particle);
-            
         }
     }
 }
@@ -103,19 +110,14 @@ void FluidSimulation::updatePositions(){
         particle.setPosition(particle.getPredictedPosition());
     }
 }
-void FluidSimulation::applyDamping(){
-    for (auto& particle : particles) {
-        auto velocity = particle.getVelocity();
-        velocity *= DAMPING;
-        particle.setVelocity(velocity);
-    }
-}
-void FluidSimulation::physicsOperations(double dt){
 
+void FluidSimulation::updatePhysics(float dt){
+    grid.rebuild(particles);
+    updateDensityAndPressure();
     applyForces();
     integrateVel(dt);
     predictPositions(dt);
     resolveCollisions(dt);
     updatePositions();
-}
 
+}

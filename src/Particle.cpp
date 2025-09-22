@@ -7,8 +7,10 @@
 const double TENSION_COEFFICIENT = 7.28;
 const double GAS_CONSTANT = 300.0;
 const double REST_DENSITY = 1000.0;
+
 const double GRAVITATIONAL_CONSTANT = 6.674e-11;
-const double CORE_RADIUS = 1.0;
+
+const double CORE_RADIUS = 1.;
 const double CORE_RADIUS9 = std::pow(CORE_RADIUS, 9);
 const double CORE_RADIUS6 = std::pow(CORE_RADIUS,6);
 const double CORE_RADIUS2 = std::pow(CORE_RADIUS, 2);
@@ -23,7 +25,7 @@ const double LAPLACIAN_VISC_COEFF = 45.0 / (M_PI * CORE_RADIUS6);
 
 
 double Wpoly6(double distanceSq){
-    if( distanceSq > CORE_RADIUS)return 0.0;
+    if( distanceSq > CORE_RADIUS2)return 0.0;
     const double coefficient = 315.0/(64.0*M_PI*CORE_RADIUS9);
     const double diff = CORE_RADIUS2 - distanceSq;
     return coefficient * diff * diff * diff;
@@ -63,7 +65,7 @@ float3 gradientWspiky( const float3& vect){
 double laplacianViscosityKernel(const double& distance){
     
     
-    if(distance >= CORE_RADIUS2 || distance < 0) return 0.0;
+    if(distance >= CORE_RADIUS || distance < 0) return 0.0;
     return LAPLACIAN_VISC_COEFF * (CORE_RADIUS - distance);
 }
 

@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <Particle.h>
 
-Grid::Grid(int cellSize):cellSize(cellSize){
+Grid::Grid(double cellSize):cellSize(cellSize){
 }
 Grid::Grid(){
     cellSize = 1.0;
@@ -65,7 +65,7 @@ std::vector<int> Grid::getNeighbors(const float3& particlePosition){
                 auto it = cellHashMap.find(currCellHash);
                 if( it != cellHashMap.end()){
                     const auto& cellParticles = it ->second;
-                    neighborParticles.insert(neighborParticles.end(),cellParticles.end(),cellParticles.begin());
+                    neighborParticles.insert(neighborParticles.end(),cellParticles.begin(),cellParticles.end());
                 }
             }
         }
@@ -74,8 +74,9 @@ std::vector<int> Grid::getNeighbors(const float3& particlePosition){
 }
 
 void Grid::rebuild(const std::vector<Particle>& particles){
+    clear();
+
     for(const auto& particle : particles){
-        clear();
         auto position = particle.getPosition();
         insertParticle(particle.getId(),position);
     }

@@ -25,30 +25,34 @@ class FluidSimulation{
     Collider worldBounds;
     Grid grid;
 
+    float targetPhysicsRate;
+    float fixedTimeStep;
+    float timeAccumulator; 
+    int maxPhysicsStepsPerFrame;
+    std::chrono::high_resolution_clock::time_point lastFrameTime;
 
-    const double fixedTimeStep = 1.0 / 120.0;
-    double maxAccumulator = 0.25;
-    double accumulator = 0.0;
 
     const double DAMPING = 0.99;
 
     public:
     FluidSimulation(const std::vector<Particle>& particles,const Collider& worldBounds);
-    void update(double deltaTime);
     inline bool isValidVector(const float3& vec) const;
     std::vector<Particle> getParticles(){return particles;}
+    void setTargetPhysicsRate(float hz);
+    void update();
 
     Grid getGrid();
     private:
-    void updateDensityAndPressure();
 
+    void updateDensityAndPressure();
     void applyForces();
     void integrateVel(double dt);
     void predictPositions(double dt);
     void resolveCollisions(double dt);
     void updatePositions();
-    void physicsOperations(double dt);
     void applyDamping();
+
+    void updatePhysics(float dt);
 
 
  

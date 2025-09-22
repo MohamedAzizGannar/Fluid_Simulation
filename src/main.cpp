@@ -15,7 +15,7 @@
 #include <Collider.h>
 #include <FluidSimulation.h>
 #include<Block.h>
-bool running = true;
+const double PARTICLE_RADIUS = 1.;
 double getRoundedRandom(double min, double max, int decimals)
 {
     static std::random_device rd;
@@ -31,68 +31,63 @@ double roundDouble(double num,uint8_t decimals)
     return std::round(num*scale) /scale;
 }
 
-std::vector<Particle> initialiseParticlesArray(int rows,int cols,int depth)
-{
-    int counter = 0;
+std::vector<Particle> populateParticles(int rows, int cols , int depth){
     std::vector<Particle> particles;
-    for(int i = 0; i< rows;i++){
-        for(int j = 0; j < cols; j++){
+    double baseSpacing = PARTICLE_RADIUS * 2.;
+    int count = 0;
+    for(int i = 0 ; i < rows; i++){
+        for(int j = 0; j < cols ; j++){
             for(int k = 0; k < depth; k++){
-                const float3 pos = {static_cast<double>(i)*2. + getRoundedRandom(-0.1, 0.1, 2),
-                             static_cast<double>(j)*2. + getRoundedRandom(-0.1, 0.1, 2),
-                             static_cast<double>(k)*2. + getRoundedRandom(-0.1, 0.1, 2)};
-                const float3 cst = {0,0,0};
-                const float3 vel = {static_cast<double>(i) + getRoundedRandom(-0.1, 0.1, 2),
-                             static_cast<double>(j) + getRoundedRandom(-0.1, 0.1, 2),
-                             static_cast<double>(k) + getRoundedRandom(-0.1, 0.1, 2)};
+                float3 pos = {(double)i + baseSpacing,(double)j + baseSpacing,(double)k + baseSpacing};
+                float3 vel = {getRoundedRandom(-1.,1.,1),getRoundedRandom(-1.,1.,1),getRoundedRandom(-1.,1.,1)};
+                float3 acc = {0.,0.,0.};
 
-                Particle newParticle = Particle(pos,vel,cst,counter);
-                counter++;
+                Particle newParticle(pos,vel,acc,count);
+                count++;
+
                 particles.push_back(newParticle);
+                
             }
         }
     }
     return particles;
 }
 
-float3 minBounds = {-0.5, -0.5, -0.5};
-float3 maxBounds = {50.5, 50.5, 50.5};
-
-Collider boxCollider = Collider(minBounds,maxBounds);
-std::vector<Particle> particles = initialiseParticlesArray(20,20,20);
-
-void runSimulation(double durationSeconds){
-    FluidSimulation sim(particles,boxCollider);
-    auto testStart = std::chrono::high_resolution_clock::now();
-    auto lastPrint = testStart;
-    while(true){
-        auto now = std::chrono::high_resolution_clock::now();
-
-        auto elapsed = std::chrono::duration<double>(now - testStart).count();
-
-        if (elapsed >= durationSeconds) break;
-
-        sim.update(8);
-
-         auto printElapsed = std::chrono::duration<double>(now- lastPrint).count();
-        if(printElapsed >1.0){
-            std::cout<<1000/printElapsed<<std::endl;
-            lastPrint = now;
-        }
-
-    }
-
-}
 
 int main (int argc, char** argv)
 {
-    unsigned int frames = 60;
-    unsigned int repetitions = 10;
-    double targetFPS = 60.;
-    double targetFrameTime = 1/targetFPS;
+    std::vector<Particle> particles = populateParticles(10,10,10);
 
+    float3 minBounds = {-1,-1,-1};
+    float3 maxBounds = {12,12,12};
 
-    runSimulation(5);
+    Collider boxCollider(minBounds,maxBounds);
+
+    FluidSimulation simulation(particles,boxCollider);
+    simulation.setTargetPhysicsRate(60.0f);
+
+    int frames = 2;
+    int currentFrame = 0;
+    auto startTime = std::chrono::high_resolution_clock::now();
+    while (currentFrame < frames)
+    {
+        simulation.update();
+        std::cout<<"Particle 0 : \n"<<
+                    "Position : ("<<simulation.getParticles()[0].getPosition().x<<","<<simulation.getParticles()[0].getPosition().y<<","<<simulation.getParticles()[0].getPosition().z<<")\n"<<
+                    "Velocity : ("<<simulation.getParticles()[0].getVelocity().x<<","<<simulation.getParticles()[0].getVelocity().y<<","<<simulation.getParticles()[0].getVelocity().z<<")\n"<<
+                    "Density : "<<simulation.getParticles()[0].getDensity()<<"\n"<<
+                    "Pressure : "<<simulation.getParticles()[0].getDensity()<<"\n\n";
+
+        currentFrame ++;
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto simulationTime = std::chrono::duration<double>(endTime-startTime).count();
+    auto frameTime = simulationTime / frames;
+
+    std::cout<<"Total Simulation Time for "<<frames<<"Iterations : "<<simulationTime<<"\n";
+    std::cout<<"Average Frame Time for "<<frames<<"Iterations : "<<frameTime<<"\n";
+    std::cout<<"Average FPS "<<frames<<"Iterations : "<<1/frameTime<<"\n";
+
 
     return 0;
 }
