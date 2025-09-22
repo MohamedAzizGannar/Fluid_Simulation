@@ -4,18 +4,18 @@
 #include <vector>
 #include <cmath>
 
-const double TENSION_COEFFICIENT = 7.28;
-const double GAS_CONSTANT = 300.0;
+const double TENSION_COEFFICIENT = 0.1;
+const double GAS_CONSTANT = 400.0;
 const double REST_DENSITY = 1000.0;
 
 const double GRAVITATIONAL_CONSTANT = 6.674e-11;
 
-const double CORE_RADIUS = 1.;
+const double CORE_RADIUS = 1.5;
 const double CORE_RADIUS9 = std::pow(CORE_RADIUS, 9);
 const double CORE_RADIUS6 = std::pow(CORE_RADIUS,6);
 const double CORE_RADIUS2 = std::pow(CORE_RADIUS, 2);
 
-const double MU = 0.00089;
+const double MU = 0.1;
 
 
 const double WPOLY6_COEFF = 315.0 / (64.0 * M_PI * CORE_RADIUS9);
@@ -26,9 +26,8 @@ const double LAPLACIAN_VISC_COEFF = 45.0 / (M_PI * CORE_RADIUS6);
 
 double Wpoly6(double distanceSq){
     if( distanceSq > CORE_RADIUS2)return 0.0;
-    const double coefficient = 315.0/(64.0*M_PI*CORE_RADIUS9);
     const double diff = CORE_RADIUS2 - distanceSq;
-    return coefficient * diff * diff * diff;
+    return WPOLY6_COEFF * diff * diff * diff;
 }
 float3 gradientWpoly6(const float3& vect){
     const double distanceSqrd = vect.lengthSQR();
@@ -41,9 +40,8 @@ double magnitudeGradientWpoly6(const float3& vect){
     const double distance = vect.length();
 
     if(distanceSqrd > CORE_RADIUS2)return 0.0;
-    const double coefficient = - 945.0 / (32.0 * M_PI * CORE_RADIUS9);
     const double secondMember = std::pow(CORE_RADIUS2 - distanceSqrd , 2);
-    return coefficient * secondMember * distance;
+    return GRAD_WPOLY6_COEFF * secondMember * distance;
 }
 double  laplacianWpoly6(const float3& vect){
     const double distanceSqrd = vect.lengthSQR();
@@ -120,8 +118,8 @@ int Particle::getId()const{return id;}
 
 
 
-void Particle::updatePosition(){
-    position += velocity;
+void Particle::updatePosition(double dt){
+    position += velocity * dt;
 }
 
 void Particle::updateVelocity(){
@@ -142,18 +140,17 @@ double Particle::calculateDensity(const std::vector<Particle>& particles)
     const auto& myPos = getPosition();
 
     for( const Particle& neighbor : particles){
-        if (neighbor.getId( ) == this->getId()) continue;
         const auto& neighborPos = neighbor.getPosition();
         float3 distanceVector= myPos - neighborPos;
         double distanceSqrd = distanceVector.lengthSQR();
-        if(distanceSqrd>CORE_RADIUS)continue;
+        if(distanceSqrd>CORE_RADIUS2)continue;
         density+= neighbor.getMass() * Wpoly6(distanceSqrd);
     }
     return std::max(density,1e-12);
 }
 double Particle::calculatePressure(const std::vector<Particle>& particles){
 
-    double pressure = GAS_CONSTANT * (calculateDensity(particles) - REST_DENSITY);
+    double pressure = GAS_CONSTANT * ( density - REST_DENSITY);
     return std::max(0.0,pressure);
 
 }
@@ -183,10 +180,10 @@ ColorFieldProperties Particle::calculateColorFieldProperties(const std::vector<P
         const double distanceSq = vect.lengthSQR();
         if (distanceSq >= CORE_RADIUS2) continue;
         
-        const double densityJ = neighbor.getDensity();
-        if (densityJ < 1e-6) continue;
+        const double neighborDensity = neighbor.getDensity();
+        if (neighborDensity < 1e-6) continue;
         
-        const double coefficient = neighbor.getMass() / densityJ;
+        const double coefficient = neighbor.getMass() / neighborDensity;
         
         const double poly6Value = Wpoly6(distanceSq);
         const float3 gradientValue = gradientWpoly6(vect);
@@ -228,22 +225,21 @@ void Particle::applyForcesOptimised(const std::vector<Particle>& particles){
         const double neighborDensity = neighbor.getDensity();
         const double neighborMass = neighbor.getMass();
 
-        if(density < 1e-16)continue;
+        if(neighborDensity < 1e-16)continue;
 
         const double coefficient = neighborMass / neighborDensity;
 
         //PRESSURE FORCE CALCULATION
-        if(distance < 0.0001){
-            const auto gradW = gradientWspiky(vect);
-            const double avgPressure = (myPressure + neighborPressure ) * 0.5;
-            const double pressureCoefficient = -avgPressure * coefficient;
-            pressureForce += gradW*avgPressure;
-        }
+        const auto gradW = gradientWspiky(vect);
+        const double avgPressure = (myPressure + neighborPressure ) * 0.5;
+        const double pressureCoefficient = -avgPressure * coefficient;
+        pressureForce += gradW* pressureCoefficient;
+    
 
         //VISCOSITY FORCE CALCULATION
         const auto& neighborVel = neighbor.getVelocity();
 
-        const float3 velocityDifference = myVel - neighborVel;
+        const float3 velocityDifference = neighborVel - myVel;
 
         const double laplacienViscosity = laplacianViscosityKernel(distance);
         const double viscosityCoefficient = MU * neighborMass * laplacienViscosity / neighborDensity;
@@ -259,18 +255,18 @@ void Particle::applyForcesOptimised(const std::vector<Particle>& particles){
         colorProps.gradient = colorProps.gradient + gradientValue*coefficient;
         colorProps.laplacian += laplacianValue * coefficient;
 
-        const double curvature = calculateCurvature(colorProps.laplacian, colorProps.gradient);
-        const double tensionCoefficient = -TENSION_COEFFICIENT * curvature;
-        const float3 surfaceTensionForce = colorProps.gradient*tensionCoefficient;
-
-        const auto gravity = calculateGravity();
-
-
-        const float3 totalForce = pressureForce + viscosityForce + surfaceTensionForce + gravity;
-
-        const double invDensity = 1.0 / myDensity;
-        setAcceleration(totalForce*invDensity);
     }
 
+    const double curvature = calculateCurvature(colorProps.laplacian, colorProps.gradient);
+    const double tensionCoefficient = -TENSION_COEFFICIENT * curvature;
+    const float3 surfaceTensionForce = colorProps.gradient*tensionCoefficient;
+
+    const auto gravity = calculateGravity();
+
+
+    const float3 totalForce = pressureForce + viscosityForce + surfaceTensionForce + gravity;
+
+    const double invDensity = 1.0 / myDensity;
+    setAcceleration(totalForce*invDensity);
 }
 

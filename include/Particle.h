@@ -143,7 +143,7 @@ class Particle{
 
 
     //Update Position 
-    void updatePosition();
+    void updatePosition(double dt);
 
     //Update Velocity
     void updateVelocity();

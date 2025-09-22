@@ -26,7 +26,7 @@ FluidSimulation::FluidSimulation(const std::vector<Particle>& particles,const Co
                     fixedTimeStep(1.0f / 60.0f),
                     timeAccumulator(0.0f),
                     maxPhysicsStepsPerFrame(1){
-    grid = Grid(1.);
+    grid = Grid(2.0);
 }
 Grid FluidSimulation::getGrid(){return grid;}
 void FluidSimulation::setTargetPhysicsRate(float hz){
@@ -48,8 +48,11 @@ void FluidSimulation::update(){
     
 }
 void FluidSimulation::updateDensityAndPressure(){
+    grid.rebuild(particles);
+    std::vector<int> neighborIDs;
+
     for(auto& particle : particles){
-        std::vector<int> neighborIDs = getGrid().getNeighbors(particle.getPosition());
+        grid.getNeighbors(particle.getPosition(),neighborIDs);
         std::vector<Particle> effectiveParticles = {};
         for(int neighborID : neighborIDs){effectiveParticles.push_back(particles[neighborID]);}
         particle.updateDensity(effectiveParticles);
@@ -58,11 +61,11 @@ void FluidSimulation::updateDensityAndPressure(){
 }
 void FluidSimulation::applyForces(){
     updateDensityAndPressure();
+    std::vector<int> reusableNeighborsId;
+    reusableNeighborsId.reserve(50);
     for(auto& particle:particles){
-
-        std::vector<int> neighborIDs = getGrid().getNeighbors(particle.getPosition());
         std::vector<Particle> effectiveParticles = {};
-        for(int neighborID : neighborIDs){effectiveParticles.push_back(particles[neighborID]);}
+        for(int neighborID : reusableNeighborsId){effectiveParticles.push_back(particles[neighborID]);}
         particle.applyForcesOptimised(effectiveParticles);
     }
 }
@@ -112,8 +115,6 @@ void FluidSimulation::updatePositions(){
 }
 
 void FluidSimulation::updatePhysics(float dt){
-    grid.rebuild(particles);
-    updateDensityAndPressure();
     applyForces();
     integrateVel(dt);
     predictPositions(dt);

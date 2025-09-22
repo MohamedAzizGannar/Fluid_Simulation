@@ -23,11 +23,11 @@ class Grid{
     void clear();
     void insertParticle(int particleID, const float3& particlePosition);
     std::array<int,3> getCellCoordinates( const float3& particlePosition);
-    std::vector<int> getNeighbors( const float3& particlePosition);
+    void getNeighbors( const float3& particlePosition, std::vector<int>& outNeighbors);
     void rebuild(const std::vector<Particle>& particles);
-
+    void printGridStats() const ;
     private:
-    int hashCellCoordinates(const std::array<int,3>& cellCoordinates);
+    uint64_t hashCellCoordinates(const std::array<int,3>& cellCoordinates);
 
 
 };
