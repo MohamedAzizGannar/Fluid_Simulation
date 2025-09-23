@@ -4,18 +4,18 @@
 #include <vector>
 #include <cmath>
 
-const double TENSION_COEFFICIENT = 0.1;
+const double TENSION_COEFFICIENT = 0.4;
 const double GAS_CONSTANT = 4000.0;
-const double REST_DENSITY = 1.0;
+const double REST_DENSITY = 1.;
 
 const double GRAVITATIONAL_CONSTANT = 6.674e-11;
 
-const double CORE_RADIUS = 4.0;
+const double CORE_RADIUS = 2.;
 const double CORE_RADIUS9 = std::pow(CORE_RADIUS, 9);
 const double CORE_RADIUS6 = std::pow(CORE_RADIUS,6);
 const double CORE_RADIUS2 = std::pow(CORE_RADIUS, 2);
 
-const double MU = 1.0;
+const double MU = 0.3;
 
 
 const double WPOLY6_COEFF = 315.0 / (64.0 * M_PI * CORE_RADIUS9);
@@ -51,18 +51,16 @@ double  laplacianWpoly6(const float3& vect){
     return GRAD_WPOLY6_COEFF * secondMember * thirdMember;
 }
 float3 gradientWspiky( const float3& vect){
-    const double distanceSqrd = vect.lengthSQR();
     const double distance = vect.length();
 
-    if(distanceSqrd > CORE_RADIUS2 || distance < 1e-12){return {0.0,0.0,0.0};}   
+    if(distance > CORE_RADIUS || distance < 1e-12){return {0.0,0.0,0.0};}   
     float3 dir = vect / distance; // normalize
  
     const double secondMember = CORE_RADIUS - distance;
-    const double coefficient = GRAD_WSPIKY_COEFF * 3 * secondMember * secondMember ;
+    const double coefficient = GRAD_WSPIKY_COEFF * 6 * secondMember * secondMember ;
     return dir*coefficient;
 }
 double laplacianViscosityKernel(const double& distance){
-    
     
     if(distance >= CORE_RADIUS || distance < 0) return 0.0;
     return LAPLACIAN_VISC_COEFF * (CORE_RADIUS - distance);
@@ -265,9 +263,6 @@ void Particle::applyForcesOptimised(const std::vector<Particle>& particles){
 
 
     const float3 totalForce = pressureForce + viscosityForce  + gravity + surfaceTensionForce;
-    std::cout<<"PRESSUREFORCE"<<
-                pressureForce.x<<","<<
-                pressureForce.y<<"\n";
 
     const double invDensity = 1.0 / myDensity;
     setAcceleration(totalForce*invDensity);

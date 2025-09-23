@@ -25,8 +25,8 @@ FluidSimulation::FluidSimulation(const std::vector<Particle>& particles,const Co
                     targetPhysicsRate(60.0f), 
                     fixedTimeStep(1.0f / 60.0f),
                     timeAccumulator(0.0f),
-                    maxPhysicsStepsPerFrame(1){
-    grid = Grid(5.0);
+                    maxPhysicsStepsPerFrame(4){
+    grid = Grid(2);
 }
 Grid FluidSimulation::getGrid(){return grid;}
 void FluidSimulation::setTargetPhysicsRate(float hz){
@@ -50,6 +50,7 @@ void FluidSimulation::update(){
 void FluidSimulation::updateDensityAndPressure(){
     grid.rebuild(particles);
     std::vector<int> neighborIDs;
+    neighborIDs.reserve(50);
 
     for(auto& particle : particles){
         grid.getNeighbors(particle.getPosition(),neighborIDs);
@@ -60,10 +61,13 @@ void FluidSimulation::updateDensityAndPressure(){
     }
 }
 void FluidSimulation::applyForces(){
+
     updateDensityAndPressure();
+
     std::vector<int> reusableNeighborsId;
     reusableNeighborsId.reserve(50);
     for(auto& particle:particles){
+        grid.getNeighbors(particle.getPosition(),reusableNeighborsId);
         std::vector<Particle> effectiveParticles = {};
         for(int neighborID : reusableNeighborsId){effectiveParticles.push_back(particles[neighborID]);}
         particle.applyForcesOptimised(effectiveParticles);
@@ -76,7 +80,6 @@ void FluidSimulation::integrateVel(double dt){
         const auto& acceleration = particle.getAcceleration();
         
         velocity += acceleration * dt;
-        velocity *= 0.99;
         
         particle.setVelocity(velocity);
     }
@@ -92,8 +95,6 @@ void FluidSimulation::predictPositions(double dt){
             particle.setVelocity({0.0, 0.0, 0.0});
             continue;
         }
-
-        
 
         float3 predictedPosition = position + velocity * dt;
        
@@ -116,6 +117,7 @@ void FluidSimulation::updatePositions(){
 }
 
 void FluidSimulation::updatePhysics(float dt){
+    grid.printGridStats();
     applyForces();
     integrateVel(dt);
     predictPositions(dt);

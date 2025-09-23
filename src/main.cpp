@@ -40,7 +40,7 @@ double roundDouble(double num,uint8_t decimals)
 }
 
 void populateParticles(int numberOfParticles, std::vector<Particle>& particles){
-    double baseSpacing = 1.;
+    double baseSpacing = 2.;
     int side = std::cbrt(numberOfParticles);
     int count = 0;
     float maxX = 0;
@@ -67,11 +67,11 @@ void populateParticles(int numberOfParticles, std::vector<Particle>& particles){
 int main (int argc, char** argv)
 {
     std::vector<Particle> particles;
-    particles.reserve(500);
-    populateParticles(500,particles);
+    particles.reserve(1500);
+    populateParticles(1500,particles);
 
     float3 minBounds = {0,0,0};
-    float3 maxBounds = {18,18,18};
+    float3 maxBounds = {20,20,20};
 
     Collider boxCollider(minBounds,maxBounds);
 
@@ -81,8 +81,8 @@ int main (int argc, char** argv)
     InitWindow(SCREEN_WIDTH,SCREEN_HEIGHT,"simulation");
     SetTargetFPS(120);
 
-    double multiplicationFactorX = 900. / 18.;
-    double multiplicationFactorY = 700. / 18.;
+    double multiplicationFactorX = 900. / 20.;
+    double multiplicationFactorY = 700. / 20.;
 
 
     while(!WindowShouldClose()){
@@ -106,12 +106,11 @@ int main (int argc, char** argv)
             double velx = vel.x ;
             double vely = vel.y ;
             DrawCircle(x,y,5.f,BLUE);
-            DrawLine(x,y,x+velx,y+vely,BLACK);
+
 
 
 
         }
-     
         DrawFPS(10, 10);
         EndDrawing();
     }
